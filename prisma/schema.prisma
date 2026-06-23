@@ -1,0 +1,177 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model Article {
+  id        Int       @id @default(autoincrement()) @db.UnsignedInt
+  title     String?   @db.VarChar(255)
+  content   String?   @db.Text
+  cover     String?   @db.VarChar(255)
+  slug      String?   @db.VarChar(255)
+  keywords  String?   @db.VarChar(255)
+  createdAt DateTime? @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime? @map("updated_at") @db.Timestamp(0)
+
+  @@map("articles")
+}
+
+model Product {
+  id                  Int      @id @default(autoincrement()) @db.UnsignedInt
+  name                String   @db.VarChar(200)
+  sku                 String   @db.VarChar(11)
+  image               String   @db.Text
+  link                String   @db.Text
+  colorway            String   @db.VarChar(80)
+  description         String   @db.Text
+  content             String?  @db.Text
+  slug                String   @db.VarChar(255)
+  price               Decimal  @db.Decimal(5, 2)
+  comingSoon          Int      @map("coming_soon") @db.Int
+  views               Int      @default(0) @db.Int
+  resale              String   @default("medium") @db.VarChar(50)
+  type                String   @default("sneakers") @db.VarChar(40)
+  stockxUrl           String   @map("stockx_url") @db.VarChar(90)
+  stockxThumbnailUrl  String   @map("stockx_thumbnail_url") @db.Text
+  stockxTickerSymbol  String   @map("stockx_ticker_symbol") @db.VarChar(90)
+  stockxName          String   @map("stockx_name") @db.VarChar(90)
+  stockxMake          String   @map("stockx_make") @db.VarChar(90)
+  stockxModel         String   @map("stockx_model") @db.VarChar(90)
+  stockxPrice         Int      @map("stockx_price") @db.Int
+  stockxHighestBid    Int      @map("stockx_highest_bid") @db.Int
+  stockxTotalDollars  Int      @map("stockx_total_dollars") @db.Int
+  stockxLowestAsk     Int      @map("stockx_lowest_ask") @db.Int
+  stockxLastSale      Int      @map("stockx_last_sale") @db.Int
+  stockxDeadstockSold Int      @map("stockx_deadstock_sold") @db.Int
+  stockxSalesLast72   Int      @map("stockx_sales_last_72") @db.Int
+  createdAt           DateTime @map("created_at") @db.DateTime(0)
+  updatedAt           DateTime @map("updated_at") @db.DateTime(0)
+
+  @@index([id], map: "id")
+  @@map("products")
+}
+
+model Comment {
+  id        Int       @id @default(autoincrement()) @db.UnsignedInt
+  memberId  Int?      @map("member_id") @db.Int
+  productId Int?      @map("product_id") @db.Int
+  comment   String?   @db.VarChar(140)
+  votesUp   Int       @default(1) @map("votes_up") @db.Int
+  votesDown Int       @map("votes_down") @db.Int
+  createdAt DateTime? @map("created_at") @db.DateTime(0)
+  updatedAt DateTime? @map("updated_at") @db.DateTime(0)
+
+  @@index([productId], map: "product_id")
+  @@map("comments")
+}
+
+model TempProductImage {
+  id        Int     @id @default(autoincrement()) @db.UnsignedInt
+  productId Int?    @map("product_id") @db.Int
+  image     String? @db.Text
+
+  @@map("temp_product_images")
+}
+
+model TempProduct {
+  id          Int       @id @default(autoincrement()) @db.UnsignedInt
+  name        String    @db.VarChar(200)
+  sku         String    @db.VarChar(11)
+  image       String    @db.Text
+  link        String    @db.Text
+  description String    @db.Text
+  content     String?   @db.Text
+  slug        String    @db.VarChar(255)
+  hash        String?   @db.VarChar(255)
+  price       Decimal   @db.Decimal(5, 2)
+  status      String?   @default("new") @db.VarChar(11)
+  type        String    @db.VarChar(30)
+  releaseDate DateTime? @map("release_date") @db.DateTime(0)
+  createdAt   DateTime  @map("created_at") @db.DateTime(0)
+  updatedAt   DateTime  @map("updated_at") @db.DateTime(0)
+
+  @@index([id], map: "id")
+  @@map("temp_products")
+}
+
+model ReleaseInterest {
+  id        Int       @id @default(autoincrement()) @db.UnsignedInt
+  memberId  Int?      @map("member_id") @db.Int
+  productId Int?      @map("product_id") @db.Int
+  status    Int?      @db.Int
+  createdAt DateTime? @map("created_at") @db.DateTime(0)
+
+  @@map("release_interest")
+}
+
+model ReleaseDateUpdateLog {
+  id        Int       @id @default(autoincrement()) @db.UnsignedInt
+  productId Int?      @map("product_id") @db.Int
+  oldDate   DateTime? @map("old_date") @db.Timestamp(0)
+  newDate   DateTime? @map("new_date") @db.Timestamp(0)
+  createdAt DateTime? @map("created_at") @db.Timestamp(0)
+  updatedAt DateTime? @map("updated_at") @db.Timestamp(0)
+
+  @@map("release_date_update_log")
+}
+
+model Release {
+  id          Int      @id @default(autoincrement()) @db.Int
+  productId   Int      @map("product_id") @db.Int
+  releaseDate DateTime @map("release_date") @db.Timestamp(0)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt   DateTime @map("updated_at") @db.Timestamp(0)
+
+  @@index([productId], map: "product_id")
+  @@map("releases")
+}
+
+model ProductImage {
+  id        Int     @id @default(autoincrement()) @db.Int
+  productId Int     @map("product_id") @db.Int
+  optimized Boolean @default(false) @db.TinyInt
+  image     String  @db.Text
+
+  @@map("product_images")
+}
+
+model ProductCheck {
+  id            Int      @id @default(autoincrement()) @db.Int
+  productId     Int      @map("product_id") @db.Int
+  link          String   @db.Text
+  searchString  String   @map("search_string") @db.Text
+  falseNegative String   @map("false_negative") @db.Text
+  status        Int      @default(1) @db.Int
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt     DateTime @map("updated_at") @db.Timestamp(0)
+
+  @@map("product_checks")
+}
+
+model Member {
+  id           Int      @id @default(autoincrement()) @db.Int
+  email        String   @db.VarChar(80)
+  password     String   @db.VarChar(80)
+  phoneNumber  String   @map("phone_number") @db.VarChar(80)
+  carrier      Int      @db.Int
+  memberType   String?  @map("member_type") @db.VarChar(40)
+  verified     Bytes    @db.Binary(1)
+  profileImage String   @default("default.png") @map("profile_image") @db.VarChar(255)
+  bouncedEmail Int      @map("bounced_email") @db.Int
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt    DateTime @map("updated_at") @db.Timestamp(0)
+
+  @@index([email], map: "email")
+  @@map("members")
+}
+
+model MemberLogin {
+  id        Int       @id @default(autoincrement()) @db.UnsignedInt
+  memberId  Int?      @map("member_id") @db.Int
+  timestamp DateTime? @db.DateTime(0)
+
+  @@map("member_logins")
+}
