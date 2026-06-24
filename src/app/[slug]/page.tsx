@@ -5,7 +5,7 @@ import { getAllReleases } from "@/lib/legacyMobileApi";
 import {
   buildMetadata,
   getBrandReleasePage,
-  getReleaseUrl,
+  getAbsoluteReleaseUrl,
   siteName,
   siteUrl,
 } from "@/lib/siteData";
@@ -55,7 +55,7 @@ export default async function BrandReleasePage({
         "@type": "ListItem",
         position: index + 1,
         name: release.name,
-        url: getReleaseUrl(release),
+        url: getAbsoluteReleaseUrl(release),
       })),
     },
   };

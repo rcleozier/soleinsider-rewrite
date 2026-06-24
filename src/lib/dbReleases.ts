@@ -76,6 +76,57 @@ export async function getDbSneakerReleasesDescending(limit = 120) {
   }
 }
 
+export async function getDbSneakerReleasesRecentlyAdded(limit = 120) {
+  try {
+    const rows = await prisma.$queryRaw<DbReleaseRow[]>`
+      SELECT
+        p.id,
+        p.name,
+        p.content,
+        p.sku,
+        p.image,
+        p.link,
+        p.slug,
+        p.price,
+        p.views,
+        p.type,
+        p.stockx_highest_bid,
+        p.stockx_total_dollars,
+        p.stockx_lowest_ask,
+        p.stockx_last_sale,
+        p.stockx_deadstock_sold,
+        p.stockx_sales_last_72,
+        r.release_date AS release_date_raw,
+        p.created_at,
+        p.id AS product_id,
+        COALESCE(yes_votes.yes_votes, 0) AS yes_votes,
+        COALESCE(no_votes.no_votes, 0) AS no_votes
+      FROM products p
+      INNER JOIN releases r ON r.product_id = p.id
+      LEFT JOIN (
+        SELECT product_id, COUNT(status) AS yes_votes
+        FROM release_interest
+        WHERE status = 1
+        GROUP BY product_id
+      ) yes_votes ON yes_votes.product_id = p.id
+      LEFT JOIN (
+        SELECT product_id, COUNT(status) AS no_votes
+        FROM release_interest
+        WHERE status = 0
+        GROUP BY product_id
+      ) no_votes ON no_votes.product_id = p.id
+      WHERE p.type = 'sneakers'
+      ORDER BY p.created_at DESC, p.id DESC
+      LIMIT ${limit}
+    `;
+
+    return rows.map(mapDbReleaseToLegacyRelease);
+  } catch (error) {
+    console.warn("Falling back to mock releases because DB recently added releases failed.", error);
+    return [];
+  }
+}
+
 function mapDbReleaseToLegacyRelease(row: DbReleaseRow): LegacyRelease {
   const yesVotes = Number(row.yes_votes ?? 0);
   const noVotes = Number(row.no_votes ?? 0);

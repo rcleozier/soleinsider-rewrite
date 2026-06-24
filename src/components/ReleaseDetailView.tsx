@@ -6,9 +6,9 @@ import type { LegacyRelease } from "@/lib/legacyMobileApi";
 import {
   cleanHtmlContent,
   formatReleaseDate,
+  getAbsoluteReleaseUrl,
   getBrandName,
   getReleaseImage,
-  getReleaseUrl,
 } from "@/lib/siteData";
 
 type Comment = {
@@ -44,7 +44,7 @@ export function ReleaseDetailView({
       price: release.price,
       priceCurrency: "USD",
       availability: "https://schema.org/PreOrder",
-      url: getReleaseUrl(release),
+      url: getAbsoluteReleaseUrl(release),
     },
     aggregateRating:
       Number(release.total_votes) > 0
@@ -79,7 +79,7 @@ export function ReleaseDetailView({
           </Link>
           <a
             className="text-link text-link--external"
-            href={getReleaseUrl(release)}
+            href={getAbsoluteReleaseUrl(release)}
           >
             View live SoleInsider product
           </a>

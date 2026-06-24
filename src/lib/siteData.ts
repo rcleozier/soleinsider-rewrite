@@ -105,6 +105,10 @@ export function getReleaseImage(release: LegacyRelease) {
 }
 
 export function getReleaseUrl(release: LegacyRelease) {
+  return `/${release.slug}/${release.product_id}`;
+}
+
+export function getAbsoluteReleaseUrl(release: LegacyRelease) {
   return `${siteUrl}/${release.slug}/${release.product_id}`;
 }
 
