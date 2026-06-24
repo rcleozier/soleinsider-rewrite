@@ -1,4 +1,5 @@
 import mockData from "@/data/mobile-api.mock.json";
+import { getProductImageUrl } from "@/lib/productImages";
 
 type Release = (typeof mockData.releases)[number];
 type Comment = (typeof mockData.comments)[keyof typeof mockData.comments][number];
@@ -17,6 +18,7 @@ const slideshowsByProduct = mockData.slideshows as Record<
   string,
   SlideshowImage[]
 >;
+const savedTokens: { id: string; application: string; token: string }[] = [];
 
 const jsonHeaders = {
   "Cache-Control": "no-store",
@@ -36,15 +38,57 @@ export function getUpcomingReleases() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  return releases.filter((release) => getReleaseTimestamp(release) >= today.getTime());
+  return releases
+    .filter((release) => getReleaseTimestamp(release) >= today.getTime())
+    .map(withReleaseUrls);
 }
 
 export function getAllReleases() {
   return releases;
 }
 
+export function getRecentlyAddedReleases() {
+  return releases
+    .slice()
+    .sort((a, b) => Number(b.product_id) - Number(a.product_id))
+    .slice(0, 20)
+    .map(withReleaseUrls);
+}
+
+export function getReleaseDatesUnformatted(type = "sneakers") {
+  return releases
+    .filter((release) => release.type === type)
+    .sort((a, b) => getReleaseTimestamp(a) - getReleaseTimestamp(b))
+    .map(withReleaseUrls);
+}
+
+export function getCombinedReleaseDates() {
+  return releases
+    .filter((release) => ["sneakers", "clothing"].includes(release.type))
+    .sort((a, b) => getReleaseTimestamp(a) - getReleaseTimestamp(b))
+    .map(withReleaseUrls);
+}
+
+export function getPastReleaseDates() {
+  const twoDaysAgo = new Date();
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+  twoDaysAgo.setHours(0, 0, 0, 0);
+
+  return releases
+    .filter((release) => getReleaseTimestamp(release) < twoDaysAgo.getTime())
+    .sort((a, b) => getReleaseTimestamp(b) - getReleaseTimestamp(a))
+    .slice(0, 35)
+    .map(withReleaseUrls);
+}
+
 export function getReleaseBySlug(slug: string) {
   return releases.find((release) => release.slug === slug);
+}
+
+export function getReleaseBySlugAndId(slug: string, productId: string) {
+  return releases.find(
+    (release) => release.slug === slug && release.product_id === productId,
+  );
 }
 
 export function searchReleases(search: string | null) {
@@ -54,27 +98,54 @@ export function searchReleases(search: string | null) {
     return [];
   }
 
-  return releases.filter((release) =>
-    [release.name, release.sku, release.slug, release.type, release.content]
-      .join(" ")
-      .toLowerCase()
-      .includes(needle),
-  );
+  return releases
+    .filter((release) =>
+      [release.name, release.sku, release.slug, release.type, release.content]
+        .join(" ")
+        .toLowerCase()
+        .includes(needle),
+    )
+    .map(withReleaseUrls);
 }
 
 export function getReleasesOnDate(date: string | null) {
   const normalizedDate = date || formatMonthDay(new Date());
 
-  return releases.filter((release) => {
-    const [, , month, day] =
-      release.release_date_calendar.match(/^(\d{4}),(\d{1,2}),(\d{1,2})/) ?? [];
+  return releases
+    .filter((release) => {
+      const [, , month, day] =
+        release.release_date_calendar.match(/^(\d{4}),(\d{1,2}),(\d{1,2})/) ?? [];
 
-    return month && day && `${month.padStart(2, "0")}-${day.padStart(2, "0")}` === normalizedDate;
-  });
+      return month && day && `${month.padStart(2, "0")}-${day.padStart(2, "0")}` === normalizedDate;
+    })
+    .map(withReleaseUrls);
 }
 
 export function getSlideshow(productId: string | null) {
-  return productId ? (slideshowsByProduct[productId] ?? []) : [];
+  return productId
+    ? (slideshowsByProduct[productId] ?? []).map((image) => ({
+        ...image,
+        image_url: getProductImageUrl(image.image),
+      }))
+    : [];
+}
+
+export function getProduct(productId: string | null) {
+  const release = productId
+    ? releases.find((item) => item.product_id === productId || item.id === productId)
+    : undefined;
+
+  return release ? [withReleaseUrls(release)] : [];
+}
+
+export function getProducts() {
+  return releases.slice(0, 20).map(withReleaseUrls);
+}
+
+export function getRandomProduct() {
+  const release = releases[Math.floor(Math.random() * releases.length)];
+
+  return release ? withReleaseUrls(release) : null;
 }
 
 export function getComments(productId: string | null) {
@@ -104,19 +175,27 @@ export function leaveComment(body: LegacyPostBody) {
   const productId = body.product_id || "";
   const comment = body.comment || body.body || "";
 
-  if (!productId || !comment.trim()) {
-    return {
-      success: false,
-      error: "product_id and comment are required",
-    };
+  if (!productId || comment.trim().length < 2 || comment === "undefined") {
+    return false;
+  }
+
+  const memberId = body.member_id || "0";
+  const existing = (commentsByProduct[productId] ?? []).find(
+    (item) =>
+      item.member_id === memberId &&
+      item.comment?.trim().toLowerCase() === comment.trim().toLowerCase(),
+  );
+
+  if (existing) {
+    return true;
   }
 
   const newComment: Comment = {
     id: String(Date.now()),
-    member_id: body.member_id || "0",
+    member_id: memberId,
     product_id: productId,
     comment: comment.trim(),
-    votes_up: "0",
+    votes_up: "1",
     votes_down: "0",
     created_at: null,
     updated_at: null,
@@ -133,11 +212,7 @@ export function leaveComment(body: LegacyPostBody) {
 
   commentsByProduct[productId] = [newComment, ...(commentsByProduct[productId] ?? [])];
 
-  return {
-    success: true,
-    comment: newComment,
-    deviceId: body.deviceId || body.device_id || "",
-  };
+  return true;
 }
 
 export function voteComment(body: LegacyPostBody) {
@@ -148,22 +223,16 @@ export function voteComment(body: LegacyPostBody) {
   const comment = comments.find((item) => item.id === commentId);
 
   if (!productId || !commentId || !commentVote || !comment) {
-    return {
-      success: false,
-      error: "product_id, comment_id, and comment_vote must match a mock comment",
-    };
+    return comments;
   }
 
-  if (commentVote === "1" || commentVote.toLowerCase() === "up") {
-    comment.votes_up = String(Number(comment.votes_up) + 1);
-  } else {
+  if (commentVote === "0" || commentVote.toLowerCase() === "down") {
     comment.votes_down = String(Number(comment.votes_down) + 1);
+  } else {
+    comment.votes_up = String(Number(comment.votes_up) + 1);
   }
 
-  return {
-    success: true,
-    comment,
-  };
+  return commentsByProduct[productId] ?? [];
 }
 
 export function copOrNot(body: LegacyPostBody) {
@@ -172,10 +241,7 @@ export function copOrNot(body: LegacyPostBody) {
   const release = releases.find((item) => item.product_id === productId || item.id === productId);
 
   if (!productId || !status || !release) {
-    return {
-      success: false,
-      error: "product_id and status must match a mock release",
-    };
+    return false;
   }
 
   if (status === "1" || status.toLowerCase() === "cop" || status.toLowerCase() === "yes") {
@@ -192,17 +258,82 @@ export function copOrNot(body: LegacyPostBody) {
   release.yes_percentage = totalVotes ? String(Math.round((yesVotes / totalVotes) * 100)) : "0";
   release.no_percentage = totalVotes ? String(100 - Number(release.yes_percentage)) : "0";
 
-  return {
-    success: true,
-    product_id: release.product_id,
-    member_id: body.member_id || "0",
-    status,
-    yes_votes: release.yes_votes,
-    no_votes: release.no_votes,
-    total_votes: release.total_votes,
-    yes_percentage: release.yes_percentage,
-    no_percentage: release.no_percentage,
-  };
+  return true;
+}
+
+export function showBanner() {
+  return false;
+}
+
+export function saveToken(body: LegacyPostBody) {
+  const token = body.token || "";
+  const application = body.application || "";
+
+  if (!token || savedTokens.some((item) => item.token === token)) {
+    return false;
+  }
+
+  savedTokens.push({
+    id: String(Date.now()),
+    application,
+    token,
+  });
+
+  return true;
+}
+
+export function getTokens(body: LegacyPostBody) {
+  const application = body.application || "";
+
+  return savedTokens.filter((item) => item.application === application);
+}
+
+export function getStatsMostSales() {
+  return releases
+    .filter((release) => Number(release.stockx_lowest_ask) > 0)
+    .sort((a, b) => Number(b.stockx_sales_last_72) - Number(a.stockx_sales_last_72))
+    .slice(0, 50)
+    .map(withReleaseUrls);
+}
+
+export function getStatsMostProfit() {
+  return releases
+    .map((release) => ({
+      ...release,
+      profit: String(Number(release.stockx_lowest_ask) - Number(release.price)),
+    }))
+    .filter((release) => Number(release.stockx_lowest_ask) > 0)
+    .sort((a, b) => Number(b.profit) - Number(a.profit))
+    .slice(0, 25)
+    .map(withReleaseUrls);
+}
+
+export function getStatsMostLiked() {
+  return releases
+    .slice()
+    .sort((a, b) => Number(b.yes_votes) - Number(a.yes_votes))
+    .slice(0, 35)
+    .map(withReleaseUrls);
+}
+
+export function getStockxTrending() {
+  return [];
+}
+
+export function getSneakerStories() {
+  return [];
+}
+
+export function getMessages() {
+  return [];
+}
+
+export function getRaffles() {
+  return [];
+}
+
+export function getNews() {
+  return [];
 }
 
 function getReleaseTimestamp(release: Release) {
@@ -240,4 +371,12 @@ function stringifyRecord(value: unknown): LegacyPostBody {
   return Object.fromEntries(
     Object.entries(value).map(([key, item]) => [key, item == null ? "" : String(item)]),
   );
+}
+
+function withReleaseUrls<T extends Release>(release: T) {
+  return {
+    ...release,
+    image_url: getProductImageUrl(release.image),
+    product_url: `https://soleinsider.com/${release.slug}/${release.product_id}`,
+  };
 }

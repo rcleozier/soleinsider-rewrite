@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CountdownModule } from "@/components/CountdownModule";
 import { CopDropButtons } from "@/components/CopDropButtons";
 import { getAllReleases } from "@/lib/legacyMobileApi";
+import { getDbSneakerReleasesDescending } from "@/lib/dbReleases";
 import {
   articles,
   appStoreUrl,
@@ -24,8 +25,11 @@ export const metadata: Metadata = buildMetadata({
   path: "/",
 });
 
-export default function Home() {
-  const releases = getAllReleases();
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const dbReleases = await getDbSneakerReleasesDescending();
+  const releases = dbReleases.length ? dbReleases : getAllReleases();
   const featuredRelease = releases[0];
   const secondaryRelease = releases[1];
   const storyImageReleases = releases.slice(1);

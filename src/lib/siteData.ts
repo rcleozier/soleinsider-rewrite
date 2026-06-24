@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getAllReleases, type LegacyRelease } from "@/lib/legacyMobileApi";
+import { getProductImageUrl } from "@/lib/productImages";
 
 export type Article = {
   slug: string;
@@ -25,10 +26,10 @@ function getMockReleaseImageByIndex(index: number) {
   const release = articleImageReleases[index % articleImageReleases.length];
 
   if (!release) {
-    return `${siteUrl}/public/products/ipad_adidas-anthony-edwards-2-lucid-blue.png`;
+    return getProductImageUrl(null);
   }
 
-  return `${siteUrl}/public/products/${release.image.trim()}`;
+  return getProductImageUrl(release.image);
 }
 
 export const navigation = [
@@ -100,7 +101,7 @@ export const articles: Article[] = [
 ];
 
 export function getReleaseImage(release: LegacyRelease) {
-  return `${siteUrl}/public/products/${release.image.trim()}`;
+  return getProductImageUrl(release.image);
 }
 
 export function getReleaseUrl(release: LegacyRelease) {
@@ -135,6 +136,51 @@ export function getBrandName(release: LegacyRelease) {
   if (name.includes("yeezy")) return "Yeezy";
 
   return "Sneakers";
+}
+
+export const brandReleasePages = [
+  {
+    slug: "air-jordan-releases",
+    label: "Air Jordan",
+    matcher: (release: LegacyRelease) => getBrandName(release) === "Jordan",
+    title: "Air Jordan Releases",
+    description:
+      "Upcoming Air Jordan release dates, retail prices, style codes, and launch details.",
+  },
+  {
+    slug: "nike-releases",
+    label: "Nike",
+    matcher: (release: LegacyRelease) => getBrandName(release) === "Nike",
+    title: "Nike Releases",
+    description:
+      "Upcoming Nike sneaker release dates, retail prices, style codes, and launch details.",
+  },
+  {
+    slug: "adidas-releases",
+    label: "adidas",
+    matcher: (release: LegacyRelease) => getBrandName(release) === "adidas",
+    title: "Adidas Releases",
+    description:
+      "Upcoming adidas release dates, retail prices, style codes, and launch details.",
+  },
+  {
+    slug: "yeezy-releases",
+    label: "Yeezy",
+    matcher: (release: LegacyRelease) => getBrandName(release) === "Yeezy",
+    title: "Yeezy Releases",
+    description:
+      "Upcoming Yeezy release dates, retail prices, style codes, and launch details.",
+  },
+] satisfies {
+  slug: string;
+  label: string;
+  matcher: (release: LegacyRelease) => boolean;
+  title: string;
+  description: string;
+}[];
+
+export function getBrandReleasePage(slug: string) {
+  return brandReleasePages.find((page) => page.slug === slug);
 }
 
 export function getSeoTitle(title: string) {

@@ -1,12 +1,12 @@
-CREATE TABLE `articles` (
-  `id` INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
-  `title` VARCHAR(255) NULL,
-  `content` TEXT NULL,
-  `cover` VARCHAR(255) NULL,
-  `slug` VARCHAR(255) NULL,
-  `keywords` VARCHAR(255) NULL,
-  `created_at` TIMESTAMP(0) NULL,
-  `updated_at` TIMESTAMP(0) NULL,
+CREATE TABLE "articles" (
+  "id" SERIAL NOT NULL,
+  "title" VARCHAR(255),
+  "content" TEXT,
+  "cover" VARCHAR(255),
+  "slug" VARCHAR(255),
+  "keywords" VARCHAR(255),
+  "created_at" TIMESTAMP(0),
+  "updated_at" TIMESTAMP(0),
 
-  PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET latin1 COLLATE latin1_swedish_ci ENGINE = InnoDB;
+  CONSTRAINT "articles_pkey" PRIMARY KEY ("id")
+);

@@ -985,6 +985,100 @@ dd {
   line-height: 1.75;
 }
 
+.calendar-list {
+  display: grid;
+  gap: 44px;
+}
+
+.calendar-list section {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 32px;
+  border-top: 1px solid var(--ink);
+  padding-top: 22px;
+}
+
+.calendar-list h2 {
+  margin: 0;
+  font-size: clamp(1.7rem, 3vw, 2.3rem);
+  line-height: 1;
+}
+
+.calendar-list section > div {
+  display: grid;
+  gap: 0;
+}
+
+.calendar-list article {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 20px;
+  border-bottom: 1px solid var(--line);
+  padding: 18px 0;
+}
+
+.calendar-list time,
+.calendar-list p,
+.history-timeline footer {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.calendar-list h3 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(1.25rem, 2vw, 1.7rem);
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+}
+
+.calendar-list p {
+  grid-column: 2;
+  margin: 6px 0 0;
+}
+
+.history-timeline {
+  display: grid;
+  gap: 0;
+}
+
+.history-timeline article {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.42fr) minmax(0, 1fr);
+  gap: 28px;
+  border-top: 1px solid var(--line);
+  padding: 28px 0;
+}
+
+.history-timeline article:first-child {
+  border-top-color: var(--ink);
+}
+
+.history-timeline img {
+  width: 100%;
+  aspect-ratio: 1.25 / 1;
+  border: 1px solid var(--line);
+  object-fit: cover;
+  filter: contrast(1.08) saturate(0.92);
+}
+
+.history-timeline h2 {
+  max-width: 760px;
+  margin: 0;
+  font-size: clamp(1.7rem, 3vw, 2.8rem);
+  line-height: 1;
+}
+
+.history-timeline div > p:not(.kicker) {
+  max-width: 760px;
+  margin: 12px 0 18px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
 .release-detail {
   display: grid;
   grid-template-columns: minmax(0, 0.95fr) minmax(340px, 0.7fr);
