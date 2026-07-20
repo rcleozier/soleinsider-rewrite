@@ -1,7 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
-import { CountdownModule } from "@/components/CountdownModule";
 import { CopDropButtons } from "@/components/CopDropButtons";
+import { LiveCountdown } from "@/components/LiveCountdown";
+import { ProductImageCarousel } from "@/components/ProductImageCarousel";
+import { RelatedProductsCarousel } from "@/components/RelatedProductsCarousel";
+import type { ProductDetailComment } from "@/lib/dbReleases";
 import type { LegacyRelease } from "@/lib/legacyMobileApi";
 import {
   cleanHtmlContent,
@@ -11,29 +13,27 @@ import {
   getReleaseImage,
 } from "@/lib/siteData";
 
-type Comment = {
-  id: string;
-  comment: string | null;
-  comment_date: string | null;
-  votes_up: string;
-};
-
 export function ReleaseDetailView({
   release,
+  images = [getReleaseImage(release)],
   comments,
+  relatedProducts = [],
 }: {
   release: LegacyRelease;
-  comments: Comment[];
+  images?: string[];
+  comments: ProductDetailComment[];
+  relatedProducts?: LegacyRelease[];
 }) {
-  const description =
-    cleanHtmlContent(release.content) ||
-    `${release.name} is listed on the SoleInsider release calendar with retail pricing, SKU details, and mobile app voting data.`;
+  const cleanedDescription = cleanHtmlContent(release.content);
+  const fallbackDescription = `${release.name} is listed on the SoleInsider release calendar with retail pricing, SKU details, and mobile app voting data.`;
+  const description = cleanedDescription || fallbackDescription;
+  const galleryImages = images.length ? images : [getReleaseImage(release)];
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: release.name,
     sku: release.sku,
-    image: getReleaseImage(release),
+    image: galleryImages,
     description,
     brand: {
       "@type": "Brand",
@@ -64,14 +64,7 @@ export function ReleaseDetailView({
       />
       <article className="release-detail">
         <div className="release-detail__media">
-          <Image
-            src={getReleaseImage(release)}
-            alt={`${release.name} sneaker`}
-            width={760}
-            height={760}
-            priority
-            loading="eager"
-          />
+          <ProductImageCarousel images={galleryImages} name={release.name} />
         </div>
         <div className="release-detail__content">
           <Link href="/" className="text-link">
@@ -85,8 +78,12 @@ export function ReleaseDetailView({
           </a>
           <p className="kicker">{getBrandName(release)} release date</p>
           <h1>{release.name}</h1>
-          <p>{description}</p>
-          <CountdownModule releaseDateCalendar={release.release_date_calendar} />
+          {cleanedDescription ? (
+            <p>{cleanedDescription}</p>
+          ) : (
+            <p>{fallbackDescription}</p>
+          )}
+          <LiveCountdown releaseDateCalendar={release.release_date_calendar} />
           <dl className="release-facts">
             <div>
               <dt>Release date</dt>
@@ -111,13 +108,15 @@ export function ReleaseDetailView({
         </div>
       </article>
 
+      <RelatedProductsCarousel products={relatedProducts} />
+
       <section className="content-band content-band--light">
         <div className="section-heading">
           <p className="kicker">Mobile app conversation</p>
           <h2>Latest comments</h2>
           <p>
-            This section reads from the same mock data backing the legacy
-            mobile comments endpoint.
+            Existing release discussion from SoleInsider visitors stays with
+            the product detail page.
           </p>
         </div>
         <div className="comment-list">
@@ -132,7 +131,7 @@ export function ReleaseDetailView({
               </article>
             ))
           ) : (
-            <p>No mock comments yet for this release.</p>
+            <p>No comments yet for this release.</p>
           )}
         </div>
       </section>

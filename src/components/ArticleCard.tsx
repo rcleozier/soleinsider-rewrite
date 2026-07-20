@@ -1,11 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
-import type { Article } from "@/lib/siteData";
+import type { ArticleRecord } from "@/lib/dbArticles";
 
-export function ArticleCard({ article }: { article: Article }) {
+export function ArticleCard({ article }: { article: ArticleRecord }) {
+  const href = article.legacyUrl || `/article/${article.slug}`;
+
   return (
     <article className="article-card">
-      <Link href={`/articles/${article.slug}`} className="article-card__media">
+      <Link href={href} className="article-card__media">
         <Image
           src={article.image}
           alt=""
@@ -16,7 +18,7 @@ export function ArticleCard({ article }: { article: Article }) {
       </Link>
       <div className="article-card__body">
         <h2>
-          <Link href={`/articles/${article.slug}`}>{article.title}</Link>
+          <Link href={href}>{article.title}</Link>
         </h2>
         <p>{article.deck}</p>
         <footer>

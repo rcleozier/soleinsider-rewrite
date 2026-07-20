@@ -52,6 +52,7 @@ description: "Task list template for feature implementation"
 - [ ] T001 Create project structure per implementation plan
 - [ ] T002 Initialize [language] project with [framework] dependencies
 - [ ] T003 [P] Configure linting and formatting tools
+- [ ] T004 Confirm affected legacy mobile endpoints and indexed URL patterns from spec.md and `docs/legacy-compatibility.md` before edits
 
 ---
 
@@ -156,6 +157,8 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] TXXX Performance optimization across all stories
 - [ ] TXXX [P] Additional unit tests (if requested) in tests/unit/
 - [ ] TXXX Security hardening
+- [ ] TXXX Smoke-test affected legacy URLs and mobile endpoints from the Constitution Check and `docs/legacy-compatibility.md`
+- [ ] TXXX Verify generated links use local SoleInsider routes unless intentionally external
 - [ ] TXXX Run quickstart.md validation
 
 ---

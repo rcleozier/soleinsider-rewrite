@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
 import { ArticleCard } from "@/components/ArticleCard";
-import { articles, buildMetadata, siteName, siteUrl } from "@/lib/siteData";
+import { getDbArticles } from "@/lib/dbArticles";
+import { articles as fallbackArticles, buildMetadata, siteName, siteUrl } from "@/lib/siteData";
 
 export const metadata: Metadata = buildMetadata({
   title: "Sneaker Stories",
   description:
     "Sneaker authentication guides, release strategy, resale market explainers, and culture stories from SoleInsider.",
   path: "/articles",
-  image: articles[0]?.image,
+  image: fallbackArticles[0]?.image,
 });
 
-export default function ArticlesPage() {
+export default async function ArticlesPage() {
+  const articles = await getDbArticles();
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Blog",
@@ -26,7 +28,7 @@ export default function ArticlesPage() {
         name: article.author,
       },
       image: article.image,
-      url: `${siteUrl}/articles/${article.slug}`,
+      url: `${siteUrl}${article.legacyUrl}`,
     })),
   };
 

@@ -4,7 +4,7 @@ import { ArticleDetailView } from "@/components/ArticleDetailView";
 import { getDbArticleBySlug, getDbArticles } from "@/lib/dbArticles";
 import { buildMetadata, siteName, siteUrl } from "@/lib/siteData";
 
-type ArticlePageProps = {
+type LegacyArticlePageProps = {
   params: Promise<{
     slug: string;
   }>;
@@ -20,7 +20,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({
   params,
-}: ArticlePageProps): Promise<Metadata> {
+}: LegacyArticlePageProps): Promise<Metadata> {
   const { slug } = await params;
   const article = await getDbArticleBySlug(slug);
 
@@ -31,12 +31,14 @@ export async function generateMetadata({
   return buildMetadata({
     title: article.title,
     description: article.deck,
-    path: `/articles/${article.slug}`,
+    path: `/article/${article.slug}`,
     image: article.image,
   });
 }
 
-export default async function ArticleDetailPage({ params }: ArticlePageProps) {
+export default async function LegacyArticleDetailPage({
+  params,
+}: LegacyArticlePageProps) {
   const { slug } = await params;
   const article = await getDbArticleBySlug(slug);
 
@@ -60,7 +62,7 @@ export default async function ArticleDetailPage({ params }: ArticlePageProps) {
       "@type": "Organization",
       name: siteName,
     },
-    mainEntityOfPage: `${siteUrl}/articles/${article.slug}`,
+    mainEntityOfPage: `${siteUrl}/article/${article.slug}`,
   };
 
   return (

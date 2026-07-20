@@ -40,7 +40,23 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+Answer each gate for this feature. Any "No" or "N/A" answer must include a
+short justification.
+
+- **Legacy Mobile API Compatibility**: Does this feature preserve existing
+  `/mobileapi/*` and `/public/mobile/*` paths, accepted request fields, and
+  response shapes from `docs/legacy-compatibility.md`? List affected endpoints
+  or state "none".
+- **Indexed URL Preservation**: Does this feature preserve known legacy URL
+  patterns and canonical behavior from `docs/legacy-compatibility.md`? List
+  affected URL patterns or state "none".
+- **Data Fidelity and Migration Safety**: Does this feature preserve legacy IDs,
+  slugs, release dates, SKUs, images, comments, and vote relationships used by
+  the mobile app or indexed pages?
+- **SEO-Crawlable Product Experience**: Does SEO-critical page content remain
+  crawlable and safe from unsafe legacy HTML rendering?
+- **Compatibility-First Verification**: Does the plan include lint/build checks
+  plus smoke tests for affected URLs and mobile endpoints?
 
 ## Project Structure
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ArticleCard } from "@/components/ArticleCard";
+import { getDbArticles } from "@/lib/dbArticles";
 import { getAllReleases } from "@/lib/legacyMobileApi";
 import {
   articles,
@@ -23,8 +24,9 @@ export const metadata: Metadata = buildMetadata({
   image: articles[0]?.image,
 });
 
-export default function SneakerHistoryPage() {
+export default async function SneakerHistoryPage() {
   const releases = getAllReleases();
+  const dbArticles = await getDbArticles(12);
   const featuredReleases = releases.slice(0, 6);
   const jsonLd = {
     "@context": "https://schema.org",
@@ -86,7 +88,7 @@ export default function SneakerHistoryPage() {
           </p>
         </div>
         <div className="article-grid article-grid--wide">
-          {articles.map((article) => (
+          {dbArticles.map((article) => (
             <ArticleCard article={article} key={article.slug} />
           ))}
         </div>

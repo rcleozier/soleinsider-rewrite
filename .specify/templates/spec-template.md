@@ -93,6 +93,18 @@
 - **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
 - **FR-005**: System MUST [behavior, e.g., "log all security events"]
 
+### Compatibility Requirements *(mandatory for the SoleInsider rewrite)*
+
+- **CR-001**: Mobile API impact MUST be listed as affected endpoint paths or
+  "none" using `docs/legacy-compatibility.md`; affected endpoints MUST preserve
+  legacy request and response compatibility unless an approved versioned
+  replacement exists.
+- **CR-002**: Legacy URL impact MUST be listed as affected URL patterns or
+  "none" using `docs/legacy-compatibility.md`; affected indexed URLs MUST
+  continue to resolve locally or redirect to equivalent local pages.
+- **CR-003**: SEO-critical content impact MUST be listed for pages that expose
+  product, release, article, calendar, or archive content.
+
 *Example of marking unclear requirements:*
 
 - **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]

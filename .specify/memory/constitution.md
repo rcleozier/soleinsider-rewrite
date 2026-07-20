@@ -1,50 +1,139 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report
+Version change: 1.0.0 -> 1.0.1
+Modified principles:
+- I. Legacy Mobile API Compatibility: clarified inventory source
+- II. Indexed URL Preservation: clarified inventory source
+Added sections:
+- none
+Removed sections:
+- none
+Templates requiring updates:
+- .specify/templates/plan-template.md: updated
+- .specify/templates/spec-template.md: updated
+- .specify/templates/tasks-template.md: updated
+Runtime guidance requiring updates:
+- README.md: updated
+Reference docs:
+- docs/legacy-compatibility.md: added
+Follow-up TODOs: none
+-->
+# SoleInsider Web Rewrite Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Legacy Mobile API Compatibility
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+The rewrite MUST preserve the legacy mobile app API contract for every endpoint
+used by the existing iOS and Android apps. Existing endpoint paths, HTTP
+methods, accepted request fields, field names, and response shapes MUST remain
+compatible unless a versioned replacement is introduced and the legacy contract
+continues to operate. Additive fields are allowed only when existing clients can
+ignore them safely. Any change touching `/mobileapi/*` or `/public/mobile/*`
+MUST include explicit compatibility validation for the affected endpoint listed
+in `docs/legacy-compatibility.md`.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+Rationale: The current mobile apps depend on the legacy PHP API behavior. The
+web rewrite cannot strand installed app users while the backend is modernized.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### II. Indexed URL Preservation
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+The rewrite MUST preserve existing public SoleInsider URL patterns that may
+exist in Google's index, social shares, app links, or user bookmarks. Product
+detail URLs, brand release URLs, calendar pages, article URLs, sneaker history,
+and other high-value legacy paths MUST continue to resolve locally or redirect
+with an intentional permanent redirect to an equivalent local page. Route
+changes MUST define canonical URL behavior and MUST NOT create avoidable 404s
+for known legacy paths listed in `docs/legacy-compatibility.md`.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+Rationale: Search traffic and historical product URLs are core business assets.
+Breaking indexed URLs directly harms discovery, rankings, and user trust.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### III. Data Fidelity and Migration Safety
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+Production data migrated from the legacy app MUST preserve stable identifiers
+and lookup fields used by users, search engines, and the mobile app, including
+product IDs, slugs, release dates, SKUs, product images, comments, and
+COP/DROP vote records. Schema or seed changes MUST be reversible or backed by a
+fresh import path before they are applied to shared environments. Legacy data
+may be cleaned for safety and presentation, but the original meaning and
+relationships MUST remain intact.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+Rationale: The rewrite is not just a new frontend; it is a continuity project
+for a long-running archive and mobile API.
+
+### IV. SEO-Crawlable Product Experience
+
+SEO-critical content MUST be available in crawlable server-rendered HTML or
+metadata wherever practical. Product and release pages MUST expose meaningful
+titles, descriptions, canonical URLs, primary images, release dates, price/SKU
+data when available, and internal links to related local pages. Legacy HTML
+content displayed to users MUST be stripped or sanitized before rendering; unsafe
+HTML MUST NOT be injected into product pages.
+
+Rationale: The site depends on search visitors who need useful product detail
+pages immediately, while the rewrite must avoid carrying unsafe legacy markup
+forward.
+
+### V. Compatibility-First Verification
+
+Every feature that touches routes, API endpoints, release data, product detail
+views, search, calendar behavior, or mobile-app data MUST include explicit
+verification for backwards compatibility. At minimum, implementation work MUST
+run lint/build checks and smoke-test affected legacy URLs and mobile endpoints.
+If a feature intentionally changes behavior, the spec and plan MUST call out the
+affected compatibility surface and the mitigation before implementation begins.
+
+Rationale: Compatibility failures are easy to miss in a rewrite and expensive
+after release; they must be treated as first-class acceptance criteria.
+
+## Rewrite Constraints
+
+- Public mobile endpoints under `/mobileapi/*` and `/public/mobile/*` are
+  compatibility surfaces, not private implementation details.
+- Existing legacy URL patterns are compatibility surfaces, even when the new app
+  has cleaner internal component boundaries.
+- `docs/legacy-compatibility.md` is the source of truth for concrete legacy
+  endpoint paths, public URL patterns, redirect decisions, and smoke checks.
+- New links generated by the rewrite SHOULD use local SoleInsider routes unless
+  the user is intentionally being sent to an external store or third-party page.
+- Product images may hotlink existing SoleInsider assets during the rewrite, but
+  image URL changes MUST preserve rendering for old and newly migrated records.
+- Prisma schema changes and data imports MUST avoid dropping legacy fields that
+  still support mobile endpoints, indexed pages, or planned migration logic.
+
+## Development Workflow
+
+- Each feature spec MUST list affected mobile API endpoints and legacy URL
+  patterns from `docs/legacy-compatibility.md`, or explicitly state that neither
+  surface is affected.
+- Each implementation plan MUST include a Constitution Check covering mobile API
+  compatibility, indexed URL preservation, data migration risk, SEO crawlability,
+  and verification tasks.
+- Each task list MUST include smoke checks for affected routes/endpoints and a
+  final diff check when a feature promises no schema, API, or URL changes.
+- Code review MUST reject changes that break known mobile endpoint contracts or
+  indexed URL behavior without an approved migration and redirect strategy.
+- Release validation SHOULD include representative homepage, product detail,
+  brand release, calendar, article, search, and mobile API requests.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes ad hoc rewrite preferences when compatibility,
+data continuity, SEO, or mobile app behavior is at risk. Amendments require a
+documented reason, an updated version number, and a Sync Impact Report listing
+affected templates or guidance files.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+Versioning follows semantic versioning:
+
+- MAJOR: Removes or redefines a compatibility principle in a way that permits
+  previously forbidden breaking changes.
+- MINOR: Adds a new principle or materially expands compatibility requirements.
+- PATCH: Clarifies wording without changing the required behavior.
+
+Every `/speckit-plan`, `/speckit-tasks`, `/speckit-analyze`, and implementation
+review MUST treat these principles as active gates. If a principle conflicts
+with a proposed feature, the feature must change or the constitution must be
+amended explicitly before implementation proceeds.
+
+**Version**: 1.0.1 | **Ratified**: 2026-06-25 | **Last Amended**: 2026-06-25
