@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
-import { getAllReleases } from "@/lib/legacyMobileApi";
+import { getDbCalendarReleases } from "@/lib/dbReleases";
+import {
+  getReleaseDatesUnformatted,
+  type LegacyRelease,
+} from "@/lib/legacyMobileApi";
 import {
   buildMetadata,
   formatReleaseDate,
   getBrandName,
+  getReleaseImage,
   getReleaseUrl,
   siteName,
   siteUrl,
@@ -17,20 +23,26 @@ export const metadata: Metadata = buildMetadata({
   path: "/calendar",
 });
 
-export default function CalendarPage() {
-  const releasesByMonth = getAllReleases().reduce<Record<string, ReturnType<typeof getAllReleases>>>(
-    (groups, release) => {
-      const month = getMonthLabel(release.release_date_calendar);
-      groups[month] = [...(groups[month] ?? []), release];
-      return groups;
-    },
-    {},
-  );
+export const dynamic = "force-dynamic";
+
+export default async function CalendarPage() {
+  const dbReleases = await getDbCalendarReleases();
+  const sourceReleases = dbReleases.length ? dbReleases : getReleaseDatesUnformatted();
+  const calendarReleases = getCalendarReleases(sourceReleases);
+  const releasesByMonth = groupReleasesByMonth(calendarReleases);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
     name: `${siteName} Sneaker Release Calendar`,
     url: `${siteUrl}/calendar`,
+    hasPart: calendarReleases.slice(0, 40).map((release) => ({
+      "@type": "Product",
+      name: release.name,
+      url: `${siteUrl}${getReleaseUrl(release)}`,
+      image: getReleaseImage(release),
+      sku: release.sku || undefined,
+      releaseDate: getIsoReleaseDate(release.release_date_calendar),
+    })),
   };
 
   return (
@@ -41,51 +53,173 @@ export default function CalendarPage() {
       />
       <section className="subpage-hero">
         <p className="kicker">Calendar</p>
-        <h1>Sneaker release calendar.</h1>
+        <h1>Release Calendar</h1>
         <p>
-          Track upcoming drops by month with release dates, retail prices, SKU
-          data, and direct product pages for the mobile app and web rewrite.
+          Never miss a sneaker drop. Browse upcoming releases organized by
+          month with prices, SKUs, product images, and local SoleInsider detail
+          pages.
         </p>
       </section>
 
       <section className="content-band">
         <div className="calendar-list">
-          {Object.entries(releasesByMonth).map(([month, releases]) => (
-            <section key={month}>
-              <h2>{month}</h2>
-              <div>
-                {releases.map((release) => (
-                  <article key={release.id}>
-                    <time>{formatReleaseDate(release)}</time>
-                    <h3>
-                      <Link href={getReleaseUrl(release)}>{release.name}</Link>
-                    </h3>
-                    <p>
-                      {getBrandName(release)} / SKU {release.sku || "TBA"} / $
-                      {release.price}
-                    </p>
+          {releasesByMonth.map((month) => (
+            <section className="calendar-month" key={month.key}>
+              <div className="calendar-month__header">
+                <p className="kicker">Release month</p>
+                <h2>
+                  {month.label} <span>({month.releases.length} releases)</span>
+                </h2>
+              </div>
+              <div className="calendar-grid">
+                {month.releases.map((release, index) => (
+                  <article className="calendar-card" key={`${release.product_id}-${release.id}`}>
+                    <Link
+                      className="calendar-card__media"
+                      href={getReleaseUrl(release)}
+                      aria-label={`View ${release.name}`}
+                    >
+                      <Image
+                        src={getReleaseImage(release)}
+                        alt={release.name}
+                        width={520}
+                        height={360}
+                        sizes="(min-width: 1100px) 25vw, (min-width: 700px) 33vw, 100vw"
+                        priority={index < 4 && month === releasesByMonth[0]}
+                      />
+                    </Link>
+                    <div className="calendar-card__body">
+                      <div className="calendar-card__meta">
+                        <time dateTime={getIsoReleaseDate(release.release_date_calendar)}>
+                          {formatReleaseDate(release)}
+                        </time>
+                        <span>{getBrandName(release)}</span>
+                      </div>
+                      <h3>
+                        <Link href={getReleaseUrl(release)}>{release.name}</Link>
+                      </h3>
+                      <dl>
+                        <div>
+                          <dt>Retail</dt>
+                          <dd>{formatPrice(release.price)}</dd>
+                        </div>
+                        <div>
+                          <dt>SKU</dt>
+                          <dd>{release.sku || "TBA"}</dd>
+                        </div>
+                      </dl>
+                      <Link className="calendar-card__link" href={getReleaseUrl(release)}>
+                        View Details
+                      </Link>
+                    </div>
                   </article>
                 ))}
               </div>
             </section>
           ))}
+
+          {!releasesByMonth.length ? (
+            <section className="calendar-empty">
+              <p className="kicker">Calendar</p>
+              <h2>No upcoming releases found.</h2>
+              <p>Check back soon for newly added SoleInsider release dates.</p>
+            </section>
+          ) : null}
         </div>
       </section>
     </main>
   );
 }
 
-function getMonthLabel(releaseDateCalendar: string) {
+type CalendarMonth = {
+  key: string;
+  label: string;
+  sort: number;
+  releases: LegacyRelease[];
+};
+
+function getCalendarReleases(releases: LegacyRelease[]) {
+  const start = getStartOfCurrentMonth();
+  const upcoming = releases.filter(
+    (release) => getReleaseTimestamp(release.release_date_calendar) >= start,
+  );
+
+  return upcoming.length ? upcoming : releases;
+}
+
+function groupReleasesByMonth(releases: LegacyRelease[]) {
+  const groups = new Map<string, CalendarMonth>();
+
+  for (const release of releases) {
+    const month = getMonthInfo(release.release_date_calendar);
+    const existing = groups.get(month.key);
+
+    if (existing) {
+      existing.releases.push(release);
+    } else {
+      groups.set(month.key, { ...month, releases: [release] });
+    }
+  }
+
+  return Array.from(groups.values()).sort((a, b) => a.sort - b.sort);
+}
+
+function getMonthInfo(releaseDateCalendar: string) {
   const match = releaseDateCalendar.match(/^(\d{4}),(\d{1,2}),(\d{1,2})/);
 
   if (!match) {
-    return "Release date TBA";
+    return {
+      key: "tba",
+      label: "Release date TBA",
+      sort: Number.MAX_SAFE_INTEGER,
+    };
   }
 
   const [, year, month] = match.map(Number);
 
-  return new Intl.DateTimeFormat("en", {
-    month: "long",
-    year: "numeric",
-  }).format(new Date(year, month - 1, 1));
+  return {
+    key: `${year}-${String(month).padStart(2, "0")}`,
+    label: new Intl.DateTimeFormat("en", {
+      month: "long",
+      year: "numeric",
+    }).format(new Date(year, month - 1, 1)),
+    sort: new Date(year, month - 1, 1).getTime(),
+  };
+}
+
+function getReleaseTimestamp(releaseDateCalendar: string) {
+  const match = releaseDateCalendar.match(/^(\d{4}),(\d{1,2}),(\d{1,2})/);
+
+  if (!match) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  const [, year, month, day] = match.map(Number);
+  return new Date(year, month - 1, day).getTime();
+}
+
+function getIsoReleaseDate(releaseDateCalendar: string) {
+  const match = releaseDateCalendar.match(/^(\d{4}),(\d{1,2}),(\d{1,2})/);
+
+  if (!match) {
+    return undefined;
+  }
+
+  const [, year, month, day] = match.map(Number);
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function getStartOfCurrentMonth() {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+}
+
+function formatPrice(price: string) {
+  const value = price.trim();
+
+  if (!value || value === "0") {
+    return "TBA";
+  }
+
+  return value.startsWith("$") ? value : `$${value}`;
 }

@@ -9,7 +9,13 @@ import {
   getReleaseUrl,
 } from "@/lib/siteData";
 
-export function ReleaseCard({ release }: { release: LegacyRelease }) {
+export function ReleaseCard({
+  release,
+  priority = false,
+}: {
+  release: LegacyRelease;
+  priority?: boolean;
+}) {
   return (
     <article className="release-card">
       <Link href={getReleaseUrl(release)} className="release-card__media">
@@ -18,6 +24,7 @@ export function ReleaseCard({ release }: { release: LegacyRelease }) {
           alt={`${release.name} sneaker`}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 980px) 50vw, 33vw"
+          priority={priority}
         />
         <span>{formatReleaseDate(release)}</span>
       </Link>

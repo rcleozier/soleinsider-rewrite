@@ -32,7 +32,7 @@ export const metadata: Metadata = buildMetadata({
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const dbReleases = await getDbSneakerReleasesRecentlyAdded();
+  const dbReleases = await getDbSneakerReleasesRecentlyAdded(48);
   const releases = dbReleases.length ? dbReleases : sortRecentlyAdded(getAllReleases());
   const featuredRelease = getFeaturedRelease(releases);
 
@@ -110,7 +110,7 @@ export default async function Home() {
               alt={`${featuredRelease.name} release`}
               fill
               sizes="(max-width: 980px) 100vw, 48vw"
-              loading="eager"
+              priority
             />
             <span className="drop-badge">Top Drop</span>
           </Link>
@@ -139,8 +139,8 @@ export default async function Home() {
           </p>
         </div>
         <div className="release-grid">
-          {newestReleases.map((release) => (
-            <ReleaseCard release={release} key={release.id} />
+          {newestReleases.map((release, index) => (
+            <ReleaseCard release={release} key={release.id} priority={index < 3} />
           ))}
         </div>
       </section>
@@ -260,7 +260,7 @@ export default async function Home() {
           </p>
           <div className="archive-day__links">
             <Link href="/sneaker-history">Sneaker history</Link>
-            <Link href="/mobileapi/onThisDate?date=06-22">On this day JSON</Link>
+            <Link href="/on-this-day">On this day</Link>
           </div>
         </div>
         <div className="archive-day__list">

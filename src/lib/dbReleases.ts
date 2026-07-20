@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import type { LegacyRelease } from "@/lib/legacyMobileApi";
 import { getProductImageUrl } from "@/lib/productImages";
@@ -106,7 +107,13 @@ export async function getDbSneakerReleasesDescending(limit = 120) {
   }
 }
 
-export async function getDbSneakerReleasesRecentlyAdded(limit = 120) {
+export const getDbSneakerReleasesRecentlyAdded = unstable_cache(
+  getDbSneakerReleasesRecentlyAddedUncached,
+  ["db-sneaker-releases-recently-added"],
+  { revalidate: 300 },
+);
+
+async function getDbSneakerReleasesRecentlyAddedUncached(limit = 120) {
   try {
     const rows = await prisma.$queryRaw<DbReleaseRow[]>`
       SELECT
@@ -155,6 +162,116 @@ export async function getDbSneakerReleasesRecentlyAdded(limit = 120) {
   } catch (error) {
     console.warn("Falling back to mock releases because DB recently added releases failed.", error);
     return [];
+  }
+}
+
+export async function getDbCalendarReleases(limit = 360) {
+  try {
+    const rows = await prisma.$queryRaw<DbReleaseRow[]>`
+      SELECT
+        p.id,
+        p.name,
+        p.description,
+        p.content,
+        p.sku,
+        p.image,
+        p.link,
+        p.slug,
+        p.price,
+        p.views,
+        p.type,
+        p.stockx_highest_bid,
+        p.stockx_total_dollars,
+        p.stockx_lowest_ask,
+        p.stockx_last_sale,
+        p.stockx_deadstock_sold,
+        p.stockx_sales_last_72,
+        r.release_date AS release_date_raw,
+        p.created_at,
+        p.id AS product_id,
+        COALESCE(yes_votes.yes_votes, 0) AS yes_votes,
+        COALESCE(no_votes.no_votes, 0) AS no_votes
+      FROM releases r
+      INNER JOIN products p ON p.id = r.product_id
+      LEFT JOIN (
+        SELECT product_id, COUNT(status) AS yes_votes
+        FROM release_interest
+        WHERE status = 1
+        GROUP BY product_id
+      ) yes_votes ON yes_votes.product_id = p.id
+      LEFT JOIN (
+        SELECT product_id, COUNT(status) AS no_votes
+        FROM release_interest
+        WHERE status = 0
+        GROUP BY product_id
+      ) no_votes ON no_votes.product_id = p.id
+      WHERE p.type = 'sneakers'
+      ORDER BY r.release_date ASC, p.name ASC
+      LIMIT ${limit}
+    `;
+
+    return rows.map(mapDbReleaseToLegacyRelease);
+  } catch (error) {
+    console.warn("Falling back to mock releases because DB calendar releases failed.", error);
+    return [];
+  }
+}
+
+export async function getDbReleasesOnMonthDay(month: number, day: number, limit = 120) {
+  if (!Number.isInteger(month) || !Number.isInteger(day) || month < 1 || month > 12 || day < 1 || day > 31) {
+    return null;
+  }
+
+  try {
+    const rows = await prisma.$queryRaw<DbReleaseRow[]>`
+      SELECT
+        p.id,
+        p.name,
+        p.description,
+        p.content,
+        p.sku,
+        p.image,
+        p.link,
+        p.slug,
+        p.price,
+        p.views,
+        p.type,
+        p.stockx_highest_bid,
+        p.stockx_total_dollars,
+        p.stockx_lowest_ask,
+        p.stockx_last_sale,
+        p.stockx_deadstock_sold,
+        p.stockx_sales_last_72,
+        r.release_date AS release_date_raw,
+        p.created_at,
+        p.id AS product_id,
+        COALESCE(yes_votes.yes_votes, 0) AS yes_votes,
+        COALESCE(no_votes.no_votes, 0) AS no_votes
+      FROM releases r
+      INNER JOIN products p ON p.id = r.product_id
+      LEFT JOIN (
+        SELECT product_id, COUNT(status) AS yes_votes
+        FROM release_interest
+        WHERE status = 1
+        GROUP BY product_id
+      ) yes_votes ON yes_votes.product_id = p.id
+      LEFT JOIN (
+        SELECT product_id, COUNT(status) AS no_votes
+        FROM release_interest
+        WHERE status = 0
+        GROUP BY product_id
+      ) no_votes ON no_votes.product_id = p.id
+      WHERE p.type = 'sneakers'
+        AND EXTRACT(MONTH FROM r.release_date) = ${month}
+        AND EXTRACT(DAY FROM r.release_date) = ${day}
+      ORDER BY r.release_date DESC, p.name ASC
+      LIMIT ${Math.max(1, Math.min(limit, 240))}
+    `;
+
+    return rows.map(mapDbReleaseToLegacyRelease);
+  } catch (error) {
+    console.warn("Falling back to mock releases because DB on-this-day lookup failed.", error);
+    return null;
   }
 }
 

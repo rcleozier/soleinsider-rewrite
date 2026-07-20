@@ -36,7 +36,8 @@ shared publicly, linked from old app/web experiences, or bookmarked.
 | `/nike-releases` | `/nike-releases` | Brand release archive | Resolve locally with Nike release listings. |
 | `/yeezy-releases` | `/yeezy-releases` | Brand release archive | Resolve locally with Yeezy release listings. |
 | `/articles` | `/articles` | Article index | Resolve locally with crawlable article links. |
-| `/articles/{slug}` | `/articles/air-jordan-1-authentication-guide` | Article detail | Resolve locally when the article exists. |
+| `/article/{slug}` | `/article/10-fake-sneaker-tips` | Legacy article detail | Resolve locally when the article exists. |
+| `/articles/{slug}` | `/articles/air-jordan-1-authentication-guide` | Rewrite article detail alias | Resolve locally when the article exists. |
 | `/calendar` | `/calendar` | Release calendar | Resolve locally with crawlable calendar content. |
 | `/sneaker-history` | `/sneaker-history` | Sneaker history archive | Resolve locally with crawlable archive content. |
 | `/on-this-day` | `/on-this-day` | On-this-day archive | Resolve locally or redirect intentionally to an equivalent local page. |
