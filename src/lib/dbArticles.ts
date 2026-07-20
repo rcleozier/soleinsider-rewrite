@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { articles as fallbackArticles, type Article } from "@/lib/siteData";
+import type { Article } from "@/lib/siteData";
 
 const allowedTags = new Set([
   "a",
@@ -42,10 +42,10 @@ export async function getDbArticles(limit = 120) {
 
     const mapped = rows.map(mapDbArticle).filter((article) => article.slug);
 
-    return mapped.length ? mapped : getFallbackArticles();
+    return mapped;
   } catch (error) {
-    console.warn("Falling back to static articles because DB articles failed.", error);
-    return getFallbackArticles();
+    console.warn("Unable to read DB articles.", error);
+    return [];
   }
 }
 
@@ -57,20 +57,11 @@ export async function getDbArticleBySlug(slug: string) {
       },
     });
 
-    return row ? mapDbArticle(row) : getFallbackArticles().find((article) => article.slug === slug);
+    return row ? mapDbArticle(row) : null;
   } catch (error) {
-    console.warn("Falling back to static article because DB article lookup failed.", error);
-    return getFallbackArticles().find((article) => article.slug === slug);
+    console.warn("Unable to read DB article.", error);
+    return null;
   }
-}
-
-export function getFallbackArticles(): ArticleRecord[] {
-  return fallbackArticles.map((article, index) => ({
-    ...article,
-    id: String(index + 1),
-    html: article.body.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("\n"),
-    legacyUrl: `/article/${article.slug}`,
-  }));
 }
 
 function mapDbArticle(row: DbArticle): ArticleRecord {
@@ -88,7 +79,7 @@ function mapDbArticle(row: DbArticle): ArticleRecord {
     author: "Rob",
     date,
     category,
-    image: normalizeArticleImage(row.cover) || fallbackArticles[0]?.image || "",
+    image: normalizeArticleImage(row.cover),
     body: splitParagraphs(cleanedText),
     html: sanitizeArticleHtml(content),
     legacyUrl: `/article/${row.slug?.trim() || row.id}`,

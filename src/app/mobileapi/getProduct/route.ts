@@ -1,7 +1,8 @@
-import { getProduct, legacyJson } from "@/lib/legacyMobileApi";
+import { legacyJson } from "@/lib/legacyMobileApi";
+import { getDbProduct } from "@/lib/dbMobileApi";
 
-export function GET(request: Request) {
+export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
-  return legacyJson(getProduct(searchParams.get("product_id")));
+  return legacyJson(await getDbProduct(searchParams.get("product_id")));
 }

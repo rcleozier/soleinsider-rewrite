@@ -5,7 +5,7 @@ import { CountdownModule } from "@/components/CountdownModule";
 import { CopDropButtons } from "@/components/CopDropButtons";
 import { HeroSearch } from "@/components/HeroSearch";
 import { ReleaseCard } from "@/components/ReleaseCard";
-import { getAllReleases, type LegacyRelease } from "@/lib/legacyMobileApi";
+import type { LegacyRelease } from "@/lib/legacyMobileApi";
 import { getDbSneakerReleasesRecentlyAdded } from "@/lib/dbReleases";
 import {
   appStoreUrl,
@@ -33,10 +33,10 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const dbReleases = await getDbSneakerReleasesRecentlyAdded(48);
-  const releases = dbReleases.length ? dbReleases : sortRecentlyAdded(getAllReleases());
-  const featuredRelease = getFeaturedRelease(releases);
+  const releases = sortRecentlyAdded(dbReleases);
+  const heroRelease = getHeroRelease(releases);
 
-  if (!featuredRelease) {
+  if (!heroRelease) {
     return (
       <main className="front-page">
         <section className="homepage-empty">
@@ -51,10 +51,18 @@ export default async function Home() {
     );
   }
 
-  const newestReleases = releases.slice(0, 12);
-  const calendarPreview = getCalendarPreview(releases, featuredRelease);
-  const trendingReleases = getTrendingReleases(releases);
-  const archiveReleases = getArchiveReleases(releases, featuredRelease);
+  const featuredRelease = getFeaturedRelease(releases, [heroRelease.product_id]);
+  const shownFeatureIds = [heroRelease.product_id, featuredRelease?.product_id].filter(Boolean);
+  const newestHero = releases[0];
+  const newestStandard = releases
+    .filter((release) => release.product_id !== newestHero?.product_id)
+    .slice(0, 9);
+  const newestReleases = [newestHero, ...newestStandard].filter(
+    (release): release is LegacyRelease => Boolean(release),
+  );
+  const calendarPreview = getCalendarPreview(releases, heroRelease);
+  const trendingReleases = getTrendingReleases(releases, shownFeatureIds);
+  const archiveReleases = getArchiveReleases(releases, heroRelease);
   const seoLinks = brandReleasePages.slice(0, 4);
   const jsonLd = {
     "@context": "https://schema.org",
@@ -104,10 +112,10 @@ export default async function Home() {
         </div>
 
         <article className="home-search-hero__feature">
-          <Link href={getReleaseUrl(featuredRelease)} className="home-feature-image">
+          <Link href={getReleaseUrl(heroRelease)} className="home-feature-image">
             <Image
-              src={getReleaseImage(featuredRelease)}
-              alt={`${featuredRelease.name} release`}
+              src={getReleaseImage(heroRelease)}
+              alt={`${heroRelease.name} release`}
               fill
               sizes="(max-width: 980px) 100vw, 48vw"
               priority
@@ -115,13 +123,13 @@ export default async function Home() {
             <span className="drop-badge">Top Drop</span>
           </Link>
           <div className="home-search-hero__meta">
-            <p>{getBrandName(featuredRelease)} / {formatReleaseDate(featuredRelease)}</p>
+            <p>{getBrandName(heroRelease)} / {formatReleaseDate(heroRelease)}</p>
             <h2>
-              <Link href={getReleaseUrl(featuredRelease)}>
-                {featuredRelease.name}
+              <Link href={getReleaseUrl(heroRelease)}>
+                {heroRelease.name}
               </Link>
             </h2>
-            <span>{formatRetailPrice(featuredRelease.price)} retail</span>
+            <span>{formatRetailPrice(heroRelease.price)} retail</span>
           </div>
         </article>
       </section>
@@ -139,12 +147,26 @@ export default async function Home() {
           </p>
         </div>
         <div className="release-grid">
-          {newestReleases.map((release, index) => (
-            <ReleaseCard release={release} key={release.id} priority={index < 3} />
+          {newestHero ? (
+            <ReleaseCard release={newestHero} key={newestHero.id} priority featured />
+          ) : null}
+          {newestStandard.slice(0, 5).map((release, index) => (
+            <ReleaseCard release={release} key={release.id} priority={index < 2} />
           ))}
+          <div className="release-alert-band">
+            <p>Track any release. Get an alert when it drops.</p>
+            <Link href={appStoreUrl}>Set alert</Link>
+          </div>
+          {newestStandard.slice(5, 9).map((release) => (
+            <ReleaseCard release={release} key={release.id} />
+          ))}
+          <div className="release-grid__action">
+            <Link href="/calendar">View all releases</Link>
+          </div>
         </div>
       </section>
 
+      {featuredRelease ? (
       <section className="featured-release-panel" aria-labelledby="featured-release-title">
         <div className="featured-release-panel__media">
           <Image
@@ -180,10 +202,6 @@ export default async function Home() {
               <dt>SKU</dt>
               <dd>{featuredRelease.sku || "TBA"}</dd>
             </div>
-            <div>
-              <dt>COP / DROP</dt>
-              <dd>{featuredRelease.yes_percentage}% / {featuredRelease.no_percentage}%</dd>
-            </div>
           </dl>
           <CountdownModule releaseDateCalendar={featuredRelease.release_date_calendar} />
           <CopDropButtons release={featuredRelease} />
@@ -192,6 +210,7 @@ export default async function Home() {
           </Link>
         </div>
       </section>
+      ) : null}
 
       <section className="calendar-preview" aria-labelledby="calendar-preview-title">
         <div>
@@ -206,8 +225,17 @@ export default async function Home() {
           </Link>
         </div>
         <ol>
-          {calendarPreview.map((release) => (
+          {calendarPreview.map((release, index) => (
             <li key={release.id}>
+              {shouldShowMonthDivider(calendarPreview, index) ? (
+                <span className="calendar-preview__month">{getMonthLabel(release)}</span>
+              ) : null}
+              <Image
+                src={getReleaseImage(release)}
+                alt=""
+                width={48}
+                height={48}
+              />
               <time>{formatReleaseDate(release)}</time>
               <Link href={getReleaseUrl(release)}>{release.name}</Link>
               <span>{getBrandName(release)} / {formatRetailPrice(release.price)}</span>
@@ -243,7 +271,7 @@ export default async function Home() {
               <h3>
                 <Link href={getReleaseUrl(release)}>{release.name}</Link>
               </h3>
-              <strong>{release.yes_votes} COP votes</strong>
+              <strong>{getTrendingSignal(release)}</strong>
             </article>
           ))}
         </div>
@@ -323,10 +351,27 @@ function sortRecentlyAdded(releases: LegacyRelease[]) {
     );
 }
 
-function getFeaturedRelease(releases: LegacyRelease[]) {
+function getHeroRelease(releases: LegacyRelease[]) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return (
+    releases
+      .filter((release) => getReleaseTimestamp(release) >= today.getTime())
+      .sort((a, b) => getReleaseTimestamp(a) - getReleaseTimestamp(b))[0] ?? releases[0]
+  );
+}
+
+function getFeaturedRelease(releases: LegacyRelease[], excludeIds: string[]) {
   return releases
+    .filter((release) => !excludeIds.includes(release.product_id))
     .slice()
-    .sort((a, b) => Number(b.yes_votes) - Number(a.yes_votes))[0] ?? releases[0];
+    .sort(
+      (a, b) =>
+        getTotalVotes(b) - getTotalVotes(a) ||
+        Number(b.yes_votes) - Number(a.yes_votes) ||
+        getCreatedTimestamp(b) - getCreatedTimestamp(a),
+    )[0];
 }
 
 function getCalendarPreview(releases: LegacyRelease[], fallback: LegacyRelease) {
@@ -335,19 +380,16 @@ function getCalendarPreview(releases: LegacyRelease[], fallback: LegacyRelease) 
   const upcoming = releases
     .filter((release) => getReleaseTimestamp(release) >= today.getTime())
     .sort((a, b) => getReleaseTimestamp(a) - getReleaseTimestamp(b))
-    .slice(0, 5);
+    .slice(0, 6);
 
-  return upcoming.length ? upcoming : releases.slice(0, 5).concat(fallback).slice(0, 5);
+  return upcoming.length ? upcoming : releases.slice(0, 6).concat(fallback).slice(0, 6);
 }
 
-function getTrendingReleases(releases: LegacyRelease[]) {
+function getTrendingReleases(releases: LegacyRelease[], excludeIds: string[]) {
   return releases
+    .filter((release) => !excludeIds.includes(release.product_id))
     .slice()
-    .sort(
-      (a, b) =>
-        Number(b.yes_votes) + Number(b.no_votes) -
-        (Number(a.yes_votes) + Number(a.no_votes)),
-    )
+    .sort((a, b) => getTotalVotes(b) - getTotalVotes(a))
     .slice(0, 4);
 }
 
@@ -400,4 +442,39 @@ function formatRetailPrice(price: string) {
   if (!Number.isFinite(numericPrice) || numericPrice <= 0) return "TBA";
 
   return `$${numericPrice.toLocaleString()}`;
+}
+
+function getTotalVotes(release: LegacyRelease) {
+  return Number(release.yes_votes) + Number(release.no_votes);
+}
+
+function getTrendingSignal(release: LegacyRelease) {
+  const votes = Number(release.yes_votes);
+
+  if (votes < 25) {
+    return "Trending";
+  }
+
+  return `${votes.toLocaleString()} COP ${votes === 1 ? "vote" : "votes"}`;
+}
+
+function shouldShowMonthDivider(releases: LegacyRelease[], index: number) {
+  if (index === 0) return true;
+
+  return getMonthLabel(releases[index]) !== getMonthLabel(releases[index - 1]);
+}
+
+function getMonthLabel(release: LegacyRelease) {
+  const match = release.release_date_calendar.match(/^(\d{4}),(\d{1,2}),(\d{1,2})/);
+
+  if (!match) {
+    return "Date TBA";
+  }
+
+  const [, year, month] = match.map(Number);
+
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    year: "numeric",
+  }).format(new Date(year, month - 1, 1));
 }

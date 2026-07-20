@@ -7,6 +7,21 @@ import {
 } from "@/lib/siteData";
 
 export function SiteFooter() {
+  const brandLinks = [
+    { href: "/nike-releases", label: "Nike" },
+    { href: "/air-jordan-releases", label: "Jordan" },
+    { href: "/adidas-releases", label: "adidas" },
+    { href: "/yeezy-releases", label: "Yeezy" },
+    { href: "/new-balance-releases", label: "New Balance" },
+    { href: "/puma-releases", label: "Puma" },
+    { href: "/asics-releases", label: "ASICS" },
+    { href: "/off-white-releases", label: "Off-White" },
+  ];
+  const categoryLinks = [
+    { href: "/clothing", label: "Clothing" },
+    { href: "/music", label: "Music" },
+  ];
+
   return (
     <footer className="site-footer">
       <div className="site-footer__inner">
@@ -26,20 +41,28 @@ export function SiteFooter() {
               {item.label}
             </Link>
           ))}
+          <Link href="/releases-dates">All Releases</Link>
         </section>
         <section>
           <h2>Brands</h2>
-          {["Nike", "Jordan", "adidas", "Yeezy", "New Balance", "ASICS"].map(
-            (brand) => (
-              <Link href={`/?brand=${brand.toLowerCase()}`} key={brand}>
-                {brand}
-              </Link>
-            ),
-          )}
+          {brandLinks.map((brand) => (
+            <Link href={brand.href} key={brand.href}>
+              {brand.label}
+            </Link>
+          ))}
+        </section>
+        <section>
+          <h2>Categories</h2>
+          {categoryLinks.map((category) => (
+            <Link href={category.href} key={category.href}>
+              {category.label}
+            </Link>
+          ))}
         </section>
         <section id="download-app">
           <h2>Mobile App</h2>
           <p>Release reminders, comments, COP/DROP voting, and product stories.</p>
+          <Link href="/download">Download page</Link>
           <div className="footer-app-links">
             <a href={appStoreUrl}>App Store</a>
             <a href={googlePlayUrl}>Google Play</a>

@@ -3,9 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArticleCard } from "@/components/ArticleCard";
 import { getDbArticles } from "@/lib/dbArticles";
-import { getAllReleases } from "@/lib/legacyMobileApi";
+import { getDbRecentlyAddedReleases } from "@/lib/dbMobileApi";
 import {
-  articles,
   buildMetadata,
   cleanHtmlContent,
   formatReleaseDate,
@@ -21,11 +20,10 @@ export const metadata: Metadata = buildMetadata({
   description:
     "Sneaker history, Air Jordan stories, Nike release archives, Yeezy origins, and product timelines from SoleInsider.",
   path: "/sneaker-history",
-  image: articles[0]?.image,
 });
 
 export default async function SneakerHistoryPage() {
-  const releases = getAllReleases();
+  const releases = await getDbRecentlyAddedReleases(12);
   const dbArticles = await getDbArticles(12);
   const featuredReleases = releases.slice(0, 6);
   const jsonLd = {

@@ -1,5 +1,6 @@
-import { getReleaseDatesUnformatted, legacyJson } from "@/lib/legacyMobileApi";
+import { legacyJson } from "@/lib/legacyMobileApi";
+import { getDbReleaseDatesUnformatted } from "@/lib/dbMobileApi";
 
-export function GET() {
-  return legacyJson(getReleaseDatesUnformatted("games"));
+export async function GET() {
+  return legacyJson(await getDbReleaseDatesUnformatted("games"));
 }

@@ -1,5 +1,6 @@
-import { getPastReleaseDates, legacyJson } from "@/lib/legacyMobileApi";
+import { legacyJson } from "@/lib/legacyMobileApi";
+import { getDbPastReleaseDates } from "@/lib/dbMobileApi";
 
-export function GET() {
-  return legacyJson(getPastReleaseDates());
+export async function GET() {
+  return legacyJson(await getDbPastReleaseDates());
 }

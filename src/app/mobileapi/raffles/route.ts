@@ -1,5 +1,6 @@
-import { getRaffles, legacyJson } from "@/lib/legacyMobileApi";
+import { legacyJson } from "@/lib/legacyMobileApi";
+import { emptyLegacyCollection } from "@/lib/dbMobileApi";
 
 export function GET() {
-  return legacyJson(getRaffles());
+  return legacyJson(emptyLegacyCollection());
 }

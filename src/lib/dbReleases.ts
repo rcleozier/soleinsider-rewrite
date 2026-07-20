@@ -4,7 +4,7 @@ import type { LegacyRelease } from "@/lib/legacyMobileApi";
 import { getProductImageUrl } from "@/lib/productImages";
 import { getBrandName } from "@/lib/siteData";
 
-type DbReleaseRow = {
+export type DbReleaseRow = {
   id: number;
   name: string;
   description: string | null;
@@ -102,7 +102,7 @@ export async function getDbSneakerReleasesDescending(limit = 120) {
 
     return rows.map(mapDbReleaseToLegacyRelease);
   } catch (error) {
-    console.warn("Falling back to mock releases because DB releases failed.", error);
+    console.warn("Unable to read DB releases.", error);
     return [];
   }
 }
@@ -160,7 +160,7 @@ async function getDbSneakerReleasesRecentlyAddedUncached(limit = 120) {
 
     return rows.map(mapDbReleaseToLegacyRelease);
   } catch (error) {
-    console.warn("Falling back to mock releases because DB recently added releases failed.", error);
+    console.warn("Unable to read DB recently added releases.", error);
     return [];
   }
 }
@@ -212,7 +212,7 @@ export async function getDbCalendarReleases(limit = 360) {
 
     return rows.map(mapDbReleaseToLegacyRelease);
   } catch (error) {
-    console.warn("Falling back to mock releases because DB calendar releases failed.", error);
+    console.warn("Unable to read DB calendar releases.", error);
     return [];
   }
 }
@@ -270,7 +270,7 @@ export async function getDbReleasesOnMonthDay(month: number, day: number, limit 
 
     return rows.map(mapDbReleaseToLegacyRelease);
   } catch (error) {
-    console.warn("Falling back to mock releases because DB on-this-day lookup failed.", error);
+    console.warn("Unable to read DB on-this-day releases.", error);
     return null;
   }
 }
@@ -328,7 +328,7 @@ export async function getDbReleaseBySlugAndId(slug: string, productId: string) {
 
     return rows[0] ? mapDbReleaseToLegacyRelease(rows[0]) : null;
   } catch (error) {
-    console.warn("Falling back to mock release because DB detail lookup failed.", error);
+    console.warn("Unable to read DB release detail.", error);
     return null;
   }
 }
@@ -384,7 +384,7 @@ export async function getDbReleaseBySlug(slug: string) {
 
     return rows[0] ? mapDbReleaseToLegacyRelease(rows[0]) : null;
   } catch (error) {
-    console.warn("Falling back to mock release because DB slug lookup failed.", error);
+    console.warn("Unable to read DB release by slug.", error);
     return null;
   }
 }
@@ -448,7 +448,7 @@ export async function getDbProductComments(productId: string) {
       votes_up: String(row.votes_up ?? 0),
     }));
   } catch (error) {
-    console.warn("Falling back to mock comments because DB comments failed.", error);
+    console.warn("Unable to read DB comments.", error);
     return [];
   }
 }
@@ -522,7 +522,7 @@ export async function getDbRelatedReleases(currentRelease: LegacyRelease, limit 
 
     return rows.map(mapDbReleaseToLegacyRelease);
   } catch (error) {
-    console.warn("Falling back to mock related releases because DB related lookup failed.", error);
+    console.warn("Unable to read DB related releases.", error);
     return [];
   }
 }

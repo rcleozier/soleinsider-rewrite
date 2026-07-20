@@ -1,7 +1,8 @@
-import { getSlideshow, legacyJson } from "@/lib/legacyMobileApi";
+import { legacyJson } from "@/lib/legacyMobileApi";
+import { getDbSlideshow } from "@/lib/dbMobileApi";
 
-export function GET(request: Request) {
+export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
-  return legacyJson(getSlideshow(searchParams.get("product_id")));
+  return legacyJson(await getDbSlideshow(searchParams.get("product_id")));
 }

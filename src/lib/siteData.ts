@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getAllReleases, type LegacyRelease } from "@/lib/legacyMobileApi";
+import type { LegacyRelease } from "@/lib/legacyMobileApi";
 import { getProductImageUrl } from "@/lib/productImages";
 
 export type Article = {
@@ -20,18 +20,6 @@ export const appStoreUrl =
 export const googlePlayUrl =
   "https://play.google.com/store/apps/details?id=com.sole.insider.free&hl=en";
 
-const articleImageReleases = getAllReleases();
-
-function getMockReleaseImageByIndex(index: number) {
-  const release = articleImageReleases[index % articleImageReleases.length];
-
-  if (!release) {
-    return getProductImageUrl(null);
-  }
-
-  return getProductImageUrl(release.image);
-}
-
 export const navigation = [
   { href: "/", label: "Release Dates" },
   { href: "/articles", label: "Stories" },
@@ -39,65 +27,6 @@ export const navigation = [
   { href: "/sneaker-history", label: "Sneaker History" },
   { href: "/market-data", label: "Market Data" },
   { href: "/on-this-day", label: "On This Day" },
-];
-
-export const articles: Article[] = [
-  {
-    slug: "spot-fake-supreme-hoodie",
-    title: "How to tell if your Supreme hoodie is fake",
-    deck: "A field guide to tags, stitching, drawcords, and the tells that separate real Supreme from a convincing replica.",
-    author: "Rob",
-    date: "2026-02-03",
-    category: "Authentication",
-    image: getMockReleaseImageByIndex(0),
-    body: [
-      "Counterfeit streetwear usually gets one or two obvious things right and then misses the quiet details. Start with the neck tag, wash tag, and box logo spacing before you look at the broader silhouette.",
-      "The fastest checks are texture and consistency. Real pieces should have clean embroidery, balanced lettering, and hardware that feels substantial. Photos from sellers should include close-ups in daylight.",
-      "When a price is far below the market, slow down. Compare the garment against recent verified sales and ask for timestamped photos before sending payment.",
-    ],
-  },
-  {
-    slug: "air-jordan-1-authentication-guide",
-    title: "How to tell if your Air Jordan 1s are fake",
-    deck: "A practical authentication checklist for shape, leather, wings logos, box labels, and outsole details.",
-    author: "Rob",
-    date: "2026-08-07",
-    category: "Air Jordan",
-    image: getMockReleaseImageByIndex(1),
-    body: [
-      "Air Jordan 1 authentication starts with shape. The collar height, toe box slope, and heel curve should look balanced before you even get into labels.",
-      "Inspect the wings logo and tongue tag next. Replicas often have uneven embossing, inconsistent thread density, or spacing that feels slightly compressed.",
-      "A clean pair of photos is more useful than a dramatic angle. Ask for the box label, outsole, insole stitching, and both shoes side by side.",
-    ],
-  },
-  {
-    slug: "yeezy-350-v2-authentication",
-    title: "How to tell if your Yeezy 350 V2 are fake",
-    deck: "Primeknit pattern, heel tab placement, boost texture, and box label clues for Yeezy buyers.",
-    author: "Rob",
-    date: "2026-02-03",
-    category: "Yeezy",
-    image: getMockReleaseImageByIndex(2),
-    body: [
-      "Yeezy 350 V2 checks are about pattern rhythm. The knit should line up cleanly from side to side, especially around the stripe and heel.",
-      "Look at the boost window, outsole translucency, and heel tab angle. Fake pairs often feel too rigid or show messy glue around high-stress seams.",
-      "For resale, match the box label to the shoe tag and confirm the size tag typography against trusted references.",
-    ],
-  },
-  {
-    slug: "flipping-sneakers-release-calendar",
-    title: "Guide to flipping and reselling sneakers",
-    deck: "How to use release dates, demand signals, and sell-through data without chasing every drop.",
-    author: "Rob",
-    date: "2026-09-27",
-    category: "Market",
-    image: getMockReleaseImageByIndex(3),
-    body: [
-      "Good resale strategy starts before release day. Track calendar density, brand heat, sizes with stronger liquidity, and whether early pairs are moving above retail.",
-      "Avoid treating every limited pair the same. Some shoes spike immediately, while others need time for inventory to settle and attention to return.",
-      "The best edge is organization: release reminders, retail links, market comps, and a clear exit price before checkout.",
-    ],
-  },
 ];
 
 export function getReleaseImage(release: LegacyRelease) {
@@ -138,6 +67,9 @@ export function getBrandName(release: LegacyRelease) {
   if (name.includes("adidas")) return "adidas";
   if (name.includes("new balance")) return "New Balance";
   if (name.includes("yeezy")) return "Yeezy";
+  if (name.includes("puma")) return "Puma";
+  if (name.includes("asics")) return "ASICS";
+  if (name.includes("off-white") || name.includes("off white")) return "Off-White";
 
   return "Sneakers";
 }
@@ -175,6 +107,38 @@ export const brandReleasePages = [
     description:
       "Upcoming Yeezy release dates, retail prices, style codes, and launch details.",
   },
+  {
+    slug: "new-balance-releases",
+    label: "New Balance",
+    matcher: (release: LegacyRelease) => getBrandName(release) === "New Balance",
+    title: "New Balance Releases",
+    description:
+      "Upcoming New Balance release dates, retail prices, style codes, and launch details.",
+  },
+  {
+    slug: "puma-releases",
+    label: "Puma",
+    matcher: (release: LegacyRelease) => getBrandName(release) === "Puma",
+    title: "Puma Releases",
+    description:
+      "Upcoming Puma release dates, retail prices, style codes, and launch details.",
+  },
+  {
+    slug: "asics-releases",
+    label: "ASICS",
+    matcher: (release: LegacyRelease) => getBrandName(release) === "ASICS",
+    title: "ASICS Releases",
+    description:
+      "Upcoming ASICS release dates, retail prices, style codes, and launch details.",
+  },
+  {
+    slug: "off-white-releases",
+    label: "Off-White",
+    matcher: (release: LegacyRelease) => getBrandName(release) === "Off-White",
+    title: "Off-White Releases",
+    description:
+      "Upcoming Off-White release dates, retail prices, style codes, and launch details.",
+  },
 ] satisfies {
   slug: string;
   label: string;
@@ -185,6 +149,39 @@ export const brandReleasePages = [
 
 export function getBrandReleasePage(slug: string) {
   return brandReleasePages.find((page) => page.slug === slug);
+}
+
+export const releaseArchivePages = [
+  {
+    slug: "releases-dates",
+    title: "All Sneaker Release Dates",
+    description:
+      "Complete sneaker release calendar with Nike, Air Jordan, Yeezy, adidas, New Balance, Puma, ASICS, and more.",
+    type: "sneakers",
+  },
+  {
+    slug: "clothing",
+    title: "Clothing Release Dates",
+    description:
+      "Upcoming streetwear and clothing release dates from SoleInsider's release archive.",
+    type: "clothing",
+  },
+  {
+    slug: "music",
+    title: "Music Release Dates",
+    description:
+      "Upcoming music-related drops and release dates from the SoleInsider archive.",
+    type: "music",
+  },
+] satisfies {
+  slug: string;
+  title: string;
+  description: string;
+  type: string;
+}[];
+
+export function getReleaseArchivePage(slug: string) {
+  return releaseArchivePages.find((page) => page.slug === slug);
 }
 
 export function getSeoTitle(title: string) {
@@ -225,12 +222,4 @@ export function buildMetadata({
       images: image ? [image] : undefined,
     },
   };
-}
-
-export function getEditorialReleases() {
-  return getAllReleases().sort(
-    (a, b) =>
-      new Date(a.created_at.replace(" ", "T")).getTime() -
-      new Date(b.created_at.replace(" ", "T")).getTime(),
-  );
 }

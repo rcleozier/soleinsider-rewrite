@@ -1,5 +1,6 @@
-import { getRandomProduct, legacyJson } from "@/lib/legacyMobileApi";
+import { legacyJson } from "@/lib/legacyMobileApi";
+import { getDbRandomProduct } from "@/lib/dbMobileApi";
 
-export function GET() {
-  return legacyJson(getRandomProduct());
+export async function GET() {
+  return legacyJson(await getDbRandomProduct());
 }

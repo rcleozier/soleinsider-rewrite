@@ -3,6 +3,7 @@ import Image from "next/image";
 import { CopDropButtons } from "@/components/CopDropButtons";
 import type { LegacyRelease } from "@/lib/legacyMobileApi";
 import {
+  cleanHtmlContent,
   formatReleaseDate,
   getBrandName,
   getReleaseImage,
@@ -12,12 +13,16 @@ import {
 export function ReleaseCard({
   release,
   priority = false,
+  featured = false,
 }: {
   release: LegacyRelease;
   priority?: boolean;
+  featured?: boolean;
 }) {
+  const description = cleanHtmlContent(release.content);
+
   return (
-    <article className="release-card">
+    <article className={featured ? "release-card release-card--featured" : "release-card"}>
       <Link href={getReleaseUrl(release)} className="release-card__media">
         <Image
           src={getReleaseImage(release)}
@@ -33,18 +38,25 @@ export function ReleaseCard({
         <h2>
           <Link href={getReleaseUrl(release)}>{release.name}</Link>
         </h2>
+        {featured && description ? <p className="release-card__dek">{description}</p> : null}
         <dl>
           <div>
             <dt>Retail</dt>
-            <dd>${Number(release.price).toLocaleString()}</dd>
-          </div>
-          <div>
-            <dt>COP</dt>
-            <dd>{release.yes_percentage}%</dd>
+            <dd>{formatRetailPrice(release.price)}</dd>
           </div>
         </dl>
-        <CopDropButtons release={release} />
+        <CopDropButtons release={release} showPercentages={false} />
       </div>
     </article>
   );
+}
+
+function formatRetailPrice(price: string) {
+  const numericPrice = Number(price);
+
+  if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
+    return "TBA";
+  }
+
+  return `$${numericPrice.toLocaleString()}`;
 }

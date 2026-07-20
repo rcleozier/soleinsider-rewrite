@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
 import { ArticleCard } from "@/components/ArticleCard";
 import { getDbArticles } from "@/lib/dbArticles";
-import { articles as fallbackArticles, buildMetadata, siteName, siteUrl } from "@/lib/siteData";
+import { buildMetadata, siteName, siteUrl } from "@/lib/siteData";
 
 export const metadata: Metadata = buildMetadata({
   title: "Sneaker Stories",
   description:
     "Sneaker authentication guides, release strategy, resale market explainers, and culture stories from SoleInsider.",
   path: "/articles",
-  image: fallbackArticles[0]?.image,
 });
 
 export default async function ArticlesPage() {

@@ -1,5 +1,6 @@
-import { getCombinedReleaseDates, legacyJson } from "@/lib/legacyMobileApi";
+import { legacyJson } from "@/lib/legacyMobileApi";
+import { getDbCombinedReleaseDates } from "@/lib/dbMobileApi";
 
-export function GET() {
-  return legacyJson(getCombinedReleaseDates());
+export async function GET() {
+  return legacyJson(await getDbCombinedReleaseDates());
 }

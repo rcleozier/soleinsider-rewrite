@@ -13,15 +13,26 @@
     "prisma:studio": "prisma studio",
     "db:import:legacy": "node scripts/import-legacy-sql.mjs",
     "db:seed:legacy": "node scripts/seed-legacy-postgres.mjs --reset",
-    "db:setup": "prisma migrate deploy && node scripts/seed-legacy-postgres.mjs --reset"
+    "db:setup": "prisma migrate deploy && node scripts/seed-legacy-postgres.mjs --reset",
+    "crawl:all": "node scripts/run-crawler.mjs all",
+    "crawl:kith": "node scripts/run-crawler.mjs kith",
+    "crawl:supdrops": "node scripts/run-crawler.mjs supdrops",
+    "crawl:nicekicks": "node scripts/run-crawler.mjs nicekicks",
+    "crawl:soleretriever": "node scripts/run-crawler.mjs soleretriever",
+    "crawl:kicksonfire": "node scripts/run-crawler.mjs kicksonfire"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
+    "@sparticuz/chromium": "^149.0.0",
+    "axios": "^1.18.1",
+    "cheerio": "^1.2.0",
+    "md5": "^2.3.0",
     "mysql2": "^3.22.5",
     "next": "16.2.9",
     "pg": "^8.22.0",
     "prisma": "^7.8.0",
+    "puppeteer": "^25.3.0",
     "react": "19.2.7",
     "react-dom": "19.2.7"
   },

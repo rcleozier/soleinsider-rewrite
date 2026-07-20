@@ -1,7 +1,8 @@
-import { legacyJson, searchReleases } from "@/lib/legacyMobileApi";
+import { legacyJson } from "@/lib/legacyMobileApi";
+import { searchDbReleases } from "@/lib/dbMobileApi";
 
-export function GET(request: Request) {
+export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
-  return legacyJson(searchReleases(searchParams.get("search")));
+  return legacyJson(await searchDbReleases(searchParams.get("search")));
 }

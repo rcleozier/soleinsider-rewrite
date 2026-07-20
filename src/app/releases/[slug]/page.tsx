@@ -8,15 +8,8 @@ import {
   getDbReleaseBySlug,
 } from "@/lib/dbReleases";
 import {
-  getAllReleases,
-  getComments,
-  getReleaseBySlug,
-  type LegacyRelease,
-} from "@/lib/legacyMobileApi";
-import {
   buildMetadata,
   formatReleaseDate,
-  getBrandName,
   getReleaseImage,
 } from "@/lib/siteData";
 
@@ -26,17 +19,15 @@ type ReleasePageProps = {
   }>;
 };
 
-export function generateStaticParams() {
-  return getAllReleases().map((release) => ({
-    slug: release.slug,
-  }));
+export async function generateStaticParams() {
+  return [];
 }
 
 export async function generateMetadata({
   params,
 }: ReleasePageProps): Promise<Metadata> {
   const { slug } = await params;
-  const release = (await getDbReleaseBySlug(slug)) ?? getReleaseBySlug(slug);
+  const release = await getDbReleaseBySlug(slug);
 
   if (!release) {
     return {};
@@ -54,7 +45,7 @@ export async function generateMetadata({
 
 export default async function ReleaseDetailPage({ params }: ReleasePageProps) {
   const { slug } = await params;
-  const release = (await getDbReleaseBySlug(slug)) ?? getReleaseBySlug(slug);
+  const release = await getDbReleaseBySlug(slug);
 
   if (!release) {
     notFound();
@@ -65,31 +56,12 @@ export default async function ReleaseDetailPage({ params }: ReleasePageProps) {
     getDbProductComments(release.product_id),
     getDbRelatedReleases(release, 8),
   ]);
-  const comments = dbComments.length ? dbComments : getComments(release.product_id);
-  const relatedProducts = dbRelatedProducts.length
-    ? dbRelatedProducts
-    : getMockRelatedReleases(release);
-
   return (
     <ReleaseDetailView
-      comments={comments}
+      comments={dbComments}
       images={images}
       release={release}
-      relatedProducts={relatedProducts}
+      relatedProducts={dbRelatedProducts}
     />
   );
-}
-
-function getMockRelatedReleases(release: LegacyRelease) {
-  const brandName = getBrandName(release);
-
-  return getAllReleases()
-    .filter((item) => item.product_id !== release.product_id)
-    .sort((a, b) => {
-      const aBrandScore = getBrandName(a) === brandName ? 0 : 1;
-      const bBrandScore = getBrandName(b) === brandName ? 0 : 1;
-
-      return aBrandScore - bBrandScore || Number(b.product_id) - Number(a.product_id);
-    })
-    .slice(0, 8);
 }

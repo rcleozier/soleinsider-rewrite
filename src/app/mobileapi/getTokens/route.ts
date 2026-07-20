@@ -1,9 +1,9 @@
 import {
-  getTokens,
   legacyJson,
   readLegacyPostBody,
 } from "@/lib/legacyMobileApi";
+import { getDbTokens } from "@/lib/dbMobileApi";
 
 export async function POST(request: Request) {
-  return legacyJson(getTokens(await readLegacyPostBody(request)));
+  return legacyJson(await getDbTokens(await readLegacyPostBody(request)));
 }

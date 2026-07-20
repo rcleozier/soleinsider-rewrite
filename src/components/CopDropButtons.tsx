@@ -3,13 +3,22 @@
 import { useMemo, useState } from "react";
 import type { LegacyRelease } from "@/lib/legacyMobileApi";
 
-export function CopDropButtons({ release }: { release: LegacyRelease }) {
+export function CopDropButtons({
+  release,
+  showPercentages = true,
+}: {
+  release: LegacyRelease;
+  showPercentages?: boolean;
+}) {
   const [votes, setVotes] = useState(() => ({
     yes: Number(release.yes_votes) || 0,
     no: Number(release.no_votes) || 0,
   }));
   const [feedback, setFeedback] = useState("");
   const percentages = useMemo(() => getPercentages(votes.yes, votes.no), [votes]);
+  const totalVotes = votes.yes + votes.no;
+  const shouldShowPercentages = showPercentages && totalVotes >= 10;
+  const shouldShowStatus = shouldShowPercentages || totalVotes < 10 || feedback;
 
   async function submitVote(status: "1" | "0") {
     const previousVotes = votes;
@@ -69,10 +78,20 @@ export function CopDropButtons({ release }: { release: LegacyRelease }) {
           <strong>{votes.no}</strong>
         </button>
       </div>
-      <p aria-live="polite">
-        {percentages.yes}% / {percentages.no}% COP-DROP
-        {feedback ? ` · ${feedback}` : ""}
-      </p>
+      {shouldShowStatus ? (
+        <p aria-live="polite">
+          {shouldShowPercentages ? (
+            <>
+              <span className={percentages.yes >= 70 ? "vote-actions__cop-strong" : undefined}>
+                {percentages.yes}% COP
+              </span>
+              <span>{percentages.no}% DROP</span>
+            </>
+          ) : null}
+          {totalVotes < 10 ? <span>Be the first to vote</span> : null}
+          {feedback ? <span>{feedback}</span> : null}
+        </p>
+      ) : null}
     </div>
   );
 }

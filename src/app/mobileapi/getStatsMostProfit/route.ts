@@ -1,5 +1,6 @@
-import { getStatsMostProfit, legacyJson } from "@/lib/legacyMobileApi";
+import { legacyJson } from "@/lib/legacyMobileApi";
+import { getDbStatsMostProfit } from "@/lib/dbMobileApi";
 
-export function GET() {
-  return legacyJson(getStatsMostProfit());
+export async function GET() {
+  return legacyJson(await getDbStatsMostProfit());
 }

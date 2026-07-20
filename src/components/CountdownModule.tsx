@@ -1,3 +1,8 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+
 type CountdownModuleProps = {
   releaseDateCalendar: string;
   label?: string;
@@ -7,7 +12,26 @@ export function CountdownModule({
   releaseDateCalendar,
   label = "Drops In",
 }: CountdownModuleProps) {
-  const parts = getCountdownParts(releaseDateCalendar);
+  const [now] = useState(() => Date.now());
+  const releaseDate = parseLegacyCalendarDate(releaseDateCalendar);
+
+  if (!releaseDate) {
+    return <CountdownTbaState label={label} />;
+  }
+
+  const distance = releaseDate.getTime() - now;
+
+  if (distance <= 0) {
+    return (
+      <section className="countdown-module countdown-module--state" aria-label={label}>
+        <p>Drop status</p>
+        <strong className="countdown-state">Drop is live or elapsed</strong>
+        <Link href="/calendar">Get notified for the next drop</Link>
+      </section>
+    );
+  }
+
+  const parts = toParts(distance);
 
   return (
     <section className="countdown-module" aria-label={label}>
@@ -25,20 +49,36 @@ export function CountdownModule({
   );
 }
 
-function getCountdownParts(releaseDateCalendar: string) {
+function CountdownTbaState({ label }: { label: string }) {
+  return (
+    <section className="countdown-module countdown-module--state" aria-label={label}>
+      <p>{label}</p>
+      <strong className="countdown-state">Date TBA — get notified</strong>
+      <form>
+        <input type="email" placeholder="Email for drop alerts" aria-label="Email for drop alerts" />
+        <button type="submit">Notify me</button>
+      </form>
+    </section>
+  );
+}
+
+function parseLegacyCalendarDate(releaseDateCalendar: string) {
   const match = releaseDateCalendar.match(
     /^(\d{4}),(\d{1,2}),(\d{1,2})\s+(\d{2}):(\d{2}):(\d{2})/,
   );
 
   if (!match) {
-    return toParts(0);
+    return null;
   }
 
   const [, year, month, day, hour, minute, second] = match.map(Number);
   const releaseDate = new Date(year, month - 1, day, hour, minute, second);
-  const distance = Math.max(0, releaseDate.getTime() - Date.now());
 
-  return toParts(distance);
+  if (year < 2000 || Number.isNaN(releaseDate.getTime())) {
+    return null;
+  }
+
+  return releaseDate;
 }
 
 function toParts(distance: number) {

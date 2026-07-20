@@ -2,10 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { getDbCalendarReleases } from "@/lib/dbReleases";
-import {
-  getReleaseDatesUnformatted,
-  type LegacyRelease,
-} from "@/lib/legacyMobileApi";
+import type { LegacyRelease } from "@/lib/legacyMobileApi";
 import {
   buildMetadata,
   formatReleaseDate,
@@ -27,8 +24,7 @@ export const dynamic = "force-dynamic";
 
 export default async function CalendarPage() {
   const dbReleases = await getDbCalendarReleases();
-  const sourceReleases = dbReleases.length ? dbReleases : getReleaseDatesUnformatted();
-  const calendarReleases = getCalendarReleases(sourceReleases);
+  const calendarReleases = getCalendarReleases(dbReleases);
   const releasesByMonth = groupReleasesByMonth(calendarReleases);
   const jsonLd = {
     "@context": "https://schema.org",

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ReleaseCard } from "@/components/ReleaseCard";
 import { getDbReleasesOnMonthDay } from "@/lib/dbReleases";
-import { getReleasesOnDate, type LegacyRelease } from "@/lib/legacyMobileApi";
+import type { LegacyRelease } from "@/lib/legacyMobileApi";
 import {
   buildMetadata,
   getAbsoluteReleaseUrl,
@@ -44,11 +44,8 @@ export default async function OnThisDayPage({ searchParams }: OnThisDayPageProps
   const today = new Date();
   const selectedMonth = getBoundedNumber(params.month, today.getMonth() + 1, 1, 12);
   const selectedDay = getBoundedNumber(params.day, today.getDate(), 1, 31);
-  const legacyDate = `${String(selectedMonth).padStart(2, "0")}-${String(
-    selectedDay,
-  ).padStart(2, "0")}`;
   const dbReleases = await getDbReleasesOnMonthDay(selectedMonth, selectedDay);
-  const releases = dbReleases ?? getReleasesOnDate(legacyDate);
+  const releases = dbReleases ?? [];
   const releasesByYear = groupReleasesByYear(releases);
   const dateLabel = new Intl.DateTimeFormat("en", {
     month: "long",
