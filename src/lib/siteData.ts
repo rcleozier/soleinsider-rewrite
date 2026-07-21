@@ -24,8 +24,7 @@ export const navigation = [
   { href: "/", label: "Release Dates" },
   { href: "/articles", label: "Stories" },
   { href: "/calendar", label: "Calendar" },
-  { href: "/sneaker-history", label: "Sneaker History" },
-  { href: "/market-data", label: "Market Data" },
+  { href: "/sports", label: "Sports" },
   { href: "/on-this-day", label: "On This Day" },
 ];
 

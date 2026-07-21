@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 type SearchResult = {
   id: string;
@@ -15,6 +16,7 @@ type SearchResult = {
 };
 
 export function HeroSearch() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
@@ -76,8 +78,16 @@ export function HeroSearch() {
     }
   }
 
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (trimmedQuery) {
+      router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`);
+    }
+  }
+
   return (
-    <div className="hero-search" role="search">
+    <form className="hero-search" onSubmit={handleSubmit} role="search">
       <label htmlFor="homepage-release-search">Search the archive</label>
       <div className="hero-search__field">
         <input
@@ -88,7 +98,7 @@ export function HeroSearch() {
           placeholder="Search releases, brands, SKUs..."
           autoComplete="off"
         />
-        <span aria-hidden="true">GO</span>
+        <button type="submit">GO</button>
       </div>
       <p>{helperText}</p>
       {trimmedQuery.length >= 2 && results.length ? (
@@ -104,7 +114,7 @@ export function HeroSearch() {
           ))}
         </div>
       ) : null}
-    </div>
+    </form>
   );
 }
 

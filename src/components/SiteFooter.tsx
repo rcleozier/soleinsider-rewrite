@@ -6,35 +6,44 @@ import {
   siteName,
 } from "@/lib/siteData";
 
-export function SiteFooter() {
-  const brandLinks = [
-    { href: "/nike-releases", label: "Nike" },
-    { href: "/air-jordan-releases", label: "Jordan" },
-    { href: "/adidas-releases", label: "adidas" },
-    { href: "/yeezy-releases", label: "Yeezy" },
-    { href: "/new-balance-releases", label: "New Balance" },
-    { href: "/puma-releases", label: "Puma" },
-    { href: "/asics-releases", label: "ASICS" },
-    { href: "/off-white-releases", label: "Off-White" },
-  ];
-  const categoryLinks = [
-    { href: "/clothing", label: "Clothing" },
-    { href: "/music", label: "Music" },
-  ];
+const brandLinks = [
+  { href: "/nike-releases", label: "Nike" },
+  { href: "/air-jordan-releases", label: "Jordan" },
+  { href: "/adidas-releases", label: "adidas" },
+  { href: "/yeezy-releases", label: "Yeezy" },
+  { href: "/new-balance-releases", label: "New Balance" },
+  { href: "/puma-releases", label: "Puma" },
+  { href: "/asics-releases", label: "ASICS" },
+  { href: "/off-white-releases", label: "Off-White" },
+];
 
+const categoryLinks = [
+  { href: "/clothing", label: "Clothing" },
+  { href: "/music", label: "Music" },
+];
+
+export function SiteFooter() {
   return (
-    <footer className="site-footer">
-      <div className="site-footer__inner">
-        <section>
-          <Link className="brand-mark brand-mark--footer" href="/">
-            <span>Sole</span>Insider
+    <footer className="footer">
+      <div className="footer__inner">
+        <section className="footer__brand">
+          <Link className="footer__mark" href="/">
+            Sole<em>Insider</em>
           </Link>
           <p>
-            Sneaker release dates, streetwear stories, market notes, and buyer
-            guides for collectors who care about timing.
+            Sneaker release dates, streetwear stories, and buyer guides for
+            collectors who care about timing.
           </p>
+          <Link className="footer__cta" href="/app">
+            Get the app
+          </Link>
+          <div className="footer__stores">
+            <a href={appStoreUrl}>iOS</a>
+            <a href={googlePlayUrl}>Android</a>
+          </div>
         </section>
-        <section>
+
+        <nav className="footer__col" aria-label="Explore">
           <h2>Explore</h2>
           {navigation.map((item) => (
             <Link href={item.href} key={item.href}>
@@ -42,36 +51,35 @@ export function SiteFooter() {
             </Link>
           ))}
           <Link href="/releases-dates">All Releases</Link>
-        </section>
-        <section>
+        </nav>
+
+        <nav className="footer__col" aria-label="Brands">
           <h2>Brands</h2>
           {brandLinks.map((brand) => (
             <Link href={brand.href} key={brand.href}>
               {brand.label}
             </Link>
           ))}
-        </section>
-        <section>
+        </nav>
+
+        <nav className="footer__col" aria-label="Categories">
           <h2>Categories</h2>
           {categoryLinks.map((category) => (
             <Link href={category.href} key={category.href}>
               {category.label}
             </Link>
           ))}
-        </section>
-        <section id="download-app">
-          <h2>Mobile App</h2>
-          <p>Release reminders, comments, COP/DROP voting, and product stories.</p>
-          <Link href="/download">Download page</Link>
-          <div className="footer-app-links">
-            <a href={appStoreUrl}>App Store</a>
-            <a href={googlePlayUrl}>Google Play</a>
-          </div>
-        </section>
+        </nav>
       </div>
-      <div className="site-footer__bar">
-        <span>Copyright 2026 {siteName}. All rights reserved.</span>
-        <span>Privacy / Terms / Contact</span>
+
+      <div className="footer__bar">
+        <span>
+          &copy; {new Date().getFullYear()} {siteName}. All rights reserved.
+        </span>
+        <nav aria-label="Legal">
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
+        </nav>
       </div>
     </footer>
   );

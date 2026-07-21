@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
-import { ReleaseCard } from "@/components/ReleaseCard";
 import { getDbReleasesOnMonthDay } from "@/lib/dbReleases";
 import type { LegacyRelease } from "@/lib/legacyMobileApi";
 import {
   buildMetadata,
   getAbsoluteReleaseUrl,
   getBrandName,
+  getReleaseImage,
+  getReleaseUrl,
   siteName,
   siteUrl,
 } from "@/lib/siteData";
@@ -67,20 +69,22 @@ export default async function OnThisDayPage({ searchParams }: OnThisDayPageProps
   };
 
   return (
-    <main>
+    <main className="editorial-home otd-page">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <section className="subpage-hero on-this-day-hero">
-        <p className="kicker">On This Day</p>
-        <h1>Sneakers released on {dateLabel}.</h1>
-        <p>
-          Explore SoleInsider release history by month and day, then open local
-          product pages for prices, SKUs, images, comments, and COP/DROP data.
-        </p>
 
-        <form className="date-picker-panel" action="/on-this-day" method="get">
+      <header className="ed-masthead">
+        <p className="ed-cat">On this day</p>
+        <h1>Sneakers released on {dateLabel}.</h1>
+        <p className="ed-deck">
+          Every drop the archive recorded on this date, newest year first.
+        </p>
+      </header>
+
+      <section className="otd-controls">
+        <form className="otd-picker" action="/on-this-day" method="get">
           <label>
             <span>Month</span>
             <select name="month" defaultValue={selectedMonth}>
@@ -101,80 +105,68 @@ export default async function OnThisDayPage({ searchParams }: OnThisDayPageProps
               ))}
             </select>
           </label>
-          <button type="submit">Search</button>
+          <button type="submit">Show releases</button>
         </form>
+
+        <p className="search-count">
+          {releases.length
+            ? `${releases.length} ${releases.length === 1 ? "release" : "releases"} across ${releasesByYear.length} ${releasesByYear.length === 1 ? "year" : "years"}`
+            : "No releases on this date"}
+        </p>
       </section>
 
-      <section className="content-band on-this-day-results" aria-labelledby="on-this-day-results-title">
-        <div className="section-heading">
-          <div>
-            <p className="kicker">{dateLabel}</p>
-            <h2 id="on-this-day-results-title">
-              {releases.length
-                ? `${releases.length} release${releases.length === 1 ? "" : "s"} from the archive.`
-                : "No releases found."}
+      <div className="cal-list">
+        {releasesByYear.map((year) => (
+          <section className="cal-month" key={year.label}>
+            <h2 className="cal-month__title">
+              {year.label}
+              <span>
+                {year.releases.length} {year.releases.length === 1 ? "drop" : "drops"}
+              </span>
             </h2>
-          </div>
-          <p>
-            Results are grouped from newest to oldest so collectors can scan
-            recent drops first while still moving through the deeper archive.
-          </p>
-        </div>
+            <ol className="cal-rows search-results">
+              {year.releases.map((release) => (
+                <li key={`${release.product_id}-${release.id}`}>
+                  <Link className="cal-row__media" href={getReleaseUrl(release)}>
+                    <Image
+                      src={getReleaseImage(release)}
+                      alt=""
+                      width={160}
+                      height={160}
+                      sizes="120px"
+                    />
+                  </Link>
+                  <div className="cal-row__body">
+                    <p className="ed-cat">{getBrandName(release)}</p>
+                    <h3>
+                      <Link href={getReleaseUrl(release)}>{release.name}</Link>
+                    </h3>
+                    <p className="cal-row__meta">
+                      {release.release_date} · SKU {release.sku || "TBA"}
+                    </p>
+                  </div>
+                  <span className="cal-row__price">
+                    {release.price && release.price !== "0" ? `$${release.price}` : "TBA"}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </section>
+        ))}
 
-        {releasesByYear.length ? (
-          <div className="on-this-day-year-list">
-            {releasesByYear.map((year) => (
-              <section className="on-this-day-year" key={year.label}>
-                <div className="on-this-day-year__header">
-                  <h3>{year.label}</h3>
-                  <span>{year.releases.length} drops</span>
-                </div>
-                <div className="release-grid">
-                  {year.releases.map((release) => (
-                    <ReleaseCard release={release} key={`${release.product_id}-${release.id}`} />
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
-        ) : (
-          <div className="on-this-day-empty">
-            <p className="kicker">Try another day</p>
-            <h2>No sneakers were released on this date.</h2>
-            <p>
-              Pick a different month and day, or browse the full release
-              calendar for upcoming launches.
+        {!releasesByYear.length ? (
+          <section className="search-empty">
+            <h2>No sneakers were released on {dateLabel}.</h2>
+            <p className="ed-deck">
+              Pick another date above, or browse the full release calendar for
+              what is coming next.
             </p>
-            <Link href="/calendar">Open Release Calendar</Link>
-          </div>
-        )}
-      </section>
-
-      <section className="on-this-day-explainer" aria-labelledby="on-this-day-explainer-title">
-        <div>
-          <p className="kicker">Explore Sneaker History</p>
-          <h2 id="on-this-day-explainer-title">Search the archive by date.</h2>
-          <p>
-            SoleInsider keeps older release pages useful for collectors coming
-            from Google, mobile app users revisiting past launches, and anyone
-            checking a SKU or release anniversary.
-          </p>
-        </div>
-        <div className="on-this-day-facts">
-          <article>
-            <h3>Historical Data</h3>
-            <p>Browse release history from the legacy SoleInsider archive.</p>
-          </article>
-          <article>
-            <h3>Product Details</h3>
-            <p>Open local release pages with images, prices, SKUs, and voting.</p>
-          </article>
-          <article>
-            <h3>Market Context</h3>
-            <p>Use COP/DROP and pricing signals when data is available.</p>
-          </article>
-        </div>
-      </section>
+            <Link className="ed-more" href="/calendar">
+              Open the calendar
+            </Link>
+          </section>
+        ) : null}
+      </div>
     </main>
   );
 }

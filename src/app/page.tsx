@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { CountdownModule } from "@/components/CountdownModule";
-import { CopDropButtons } from "@/components/CopDropButtons";
 import { HeroSearch } from "@/components/HeroSearch";
-import { ReleaseCard } from "@/components/ReleaseCard";
+import type { ArticleRecord } from "@/lib/dbArticles";
+import { getDbArticles } from "@/lib/dbArticles";
 import type { LegacyRelease } from "@/lib/legacyMobileApi";
-import { getDbSneakerReleasesRecentlyAdded } from "@/lib/dbReleases";
+import {
+  getDbSneakerReleasesRecentlyAdded,
+  getDbUpcomingReleases,
+} from "@/lib/dbReleases";
 import {
   appStoreUrl,
   brandReleasePages,
@@ -31,8 +33,23 @@ export const metadata: Metadata = buildMetadata({
 
 export const dynamic = "force-dynamic";
 
+type FeedItem = {
+  key: string;
+  href: string;
+  image: string;
+  category: string;
+  title: string;
+  deck: string;
+  meta: string;
+  timestamp: number;
+};
+
 export default async function Home() {
-  const dbReleases = await getDbSneakerReleasesRecentlyAdded(48);
+  const [dbReleases, dbUpcoming, dbArticles] = await Promise.all([
+    getDbSneakerReleasesRecentlyAdded(48),
+    getDbUpcomingReleases(20),
+    getDbArticles(40),
+  ]);
   const releases = sortRecentlyAdded(dbReleases);
   const heroRelease = getHeroRelease(releases);
 
@@ -51,18 +68,44 @@ export default async function Home() {
     );
   }
 
-  const featuredRelease = getFeaturedRelease(releases, [heroRelease.product_id]);
-  const shownFeatureIds = [heroRelease.product_id, featuredRelease?.product_id].filter(Boolean);
-  const newestHero = releases[0];
-  const newestStandard = releases
-    .filter((release) => release.product_id !== newestHero?.product_id)
-    .slice(0, 9);
-  const newestReleases = [newestHero, ...newestStandard].filter(
-    (release): release is LegacyRelease => Boolean(release),
-  );
+  const articleItems = dbArticles.map(articleToFeedItem);
+  const releaseItems = releases.map(releaseToFeedItem);
+
+  // The lead mosaic prefers editorial coverage, then falls back to release data
+  // so the homepage never renders empty while the article table backfills.
+  const mosaicSource = articleItems.length >= 3 ? articleItems : releaseItems;
+  const [leadItem, ...mosaicRest] = mosaicSource;
+  const mosaicSide = mosaicRest.slice(0, 2);
+  const usedKeys = new Set([leadItem?.key, ...mosaicSide.map((item) => item.key)]);
+
+  // "Dropping next" is the priority feed: soonest upcoming release date first,
+  // falling back to most recently added once nothing upcoming is left.
+  const upcomingFeed = dbUpcoming
+    .filter((release) => !usedKeys.has(releaseKey(release)))
+    .map(releaseToFeedItem)
+    .slice(0, 10);
+  const latestFeed = upcomingFeed.length
+    ? upcomingFeed
+    : releaseItems.filter((item) => !usedKeys.has(item.key)).slice(0, 10);
+  const latestKeys = new Set(latestFeed.map((item) => item.key));
+
+  // The strip fills from what the lead and the drop feed have not claimed.
+  const strip = releaseItems
+    .filter((item) => !usedKeys.has(item.key) && !latestKeys.has(item.key))
+    .slice(0, 4);
+  strip.forEach((item) => usedKeys.add(item.key));
+
+  const popularFeed = releases
+    .filter(
+      (release) =>
+        !usedKeys.has(releaseKey(release)) && !latestKeys.has(releaseKey(release)),
+    )
+    .slice()
+    .sort((a, b) => getTotalVotes(b) - getTotalVotes(a))
+    .slice(0, 8);
+
   const calendarPreview = getCalendarPreview(releases, heroRelease);
-  const trendingReleases = getTrendingReleases(releases, shownFeatureIds);
-  const archiveReleases = getArchiveReleases(releases, heroRelease);
+  const brandRanking = getBrandRanking(releases);
   const seoLinks = brandReleasePages.slice(0, 4);
   const jsonLd = {
     "@context": "https://schema.org",
@@ -80,7 +123,7 @@ export default async function Home() {
       {
         "@type": "ItemList",
         name: "Newest SoleInsider sneaker releases",
-        itemListElement: newestReleases.map((release, index) => ({
+        itemListElement: releases.slice(0, 10).map((release, index) => ({
           "@type": "ListItem",
           position: index + 1,
           url: getAbsoluteReleaseUrl(release),
@@ -91,237 +134,180 @@ export default async function Home() {
   };
 
   return (
-    <main className="front-page homepage-redesign">
+    <main className="front-page editorial-home">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <section className="home-search-hero" aria-labelledby="home-search-title">
-        <div className="home-search-hero__copy">
-          <p className="kicker">Sneaker release archive</p>
-          <h1 id="home-search-title">
-            Search drops, track dates, and open the next release first.
-          </h1>
-          <p>
-            SoleInsider keeps sneaker collectors close to release dates, retail
-            prices, SKU codes, COP/DROP signals, and a deep archive of Nike,
-            Jordan, adidas, Yeezy, and New Balance launches.
-          </p>
-          <HeroSearch />
-        </div>
+      <h1 className="ed-sr-only">
+        SoleInsider — sneaker release dates, drops, and culture
+      </h1>
 
-        <article className="home-search-hero__feature">
-          <Link href={getReleaseUrl(heroRelease)} className="home-feature-image">
-            <Image
-              src={getReleaseImage(heroRelease)}
-              alt={`${heroRelease.name} release`}
-              fill
-              sizes="(max-width: 980px) 100vw, 48vw"
-              priority
-            />
-            <span className="drop-badge">Top Drop</span>
-          </Link>
-          <div className="home-search-hero__meta">
-            <p>{getBrandName(heroRelease)} / {formatReleaseDate(heroRelease)}</p>
-            <h2>
-              <Link href={getReleaseUrl(heroRelease)}>
-                {heroRelease.name}
-              </Link>
-            </h2>
-            <span>{formatRetailPrice(heroRelease.price)} retail</span>
-          </div>
-        </article>
-      </section>
-
-      <section className="content-band newest-release-feed" id="upcoming-releases">
-        <div className="section-heading">
-          <div>
-            <p className="kicker">Newest releases</p>
-            <h2>Freshly added to the release desk.</h2>
-          </div>
-          <p>
-            The latest products added to SoleInsider, built for fast scanning
-            from Google, direct visits, and collectors checking what just hit
-            the archive.
-          </p>
-        </div>
-        <div className="release-grid">
-          {newestHero ? (
-            <ReleaseCard release={newestHero} key={newestHero.id} priority featured />
-          ) : null}
-          {newestStandard.slice(0, 5).map((release, index) => (
-            <ReleaseCard release={release} key={release.id} priority={index < 2} />
-          ))}
-          <div className="release-alert-band">
-            <p>Track any release. Get an alert when it drops.</p>
-            <Link href={appStoreUrl}>Set alert</Link>
-          </div>
-          {newestStandard.slice(5, 9).map((release) => (
-            <ReleaseCard release={release} key={release.id} />
-          ))}
-          <div className="release-grid__action">
-            <Link href="/calendar">View all releases</Link>
-          </div>
-        </div>
-      </section>
-
-      {featuredRelease ? (
-      <section className="featured-release-panel" aria-labelledby="featured-release-title">
-        <div className="featured-release-panel__media">
-          <Image
-            src={getReleaseImage(featuredRelease)}
-            alt={`${featuredRelease.name} sneaker`}
-            fill
-            sizes="(max-width: 980px) 100vw, 46vw"
-          />
-        </div>
-        <div className="featured-release-panel__content">
-          <p className="kicker">Featured release</p>
-          <h2 id="featured-release-title">
-            <Link href={getReleaseUrl(featuredRelease)}>
-              {featuredRelease.name}
+      {leadItem ? (
+        <section className="ed-mosaic" aria-label="Lead stories">
+          <article className="ed-lead">
+            <Link href={leadItem.href} className="ed-lead__media">
+              <FeedImage item={leadItem} priority sizes="(max-width: 900px) 100vw, 62vw" />
             </Link>
-          </h2>
-          <p>
-            {cleanHtmlContent(featuredRelease.content) ||
-              `${featuredRelease.name} is listed for ${formatReleaseDate(
-                featuredRelease,
-              )} with SKU ${featuredRelease.sku || "TBA"}.`}
-          </p>
-          <dl className="homepage-facts">
-            <div>
-              <dt>Release date</dt>
-              <dd>{formatReleaseDate(featuredRelease)}</dd>
+            <div className="ed-lead__body">
+              <p className="ed-cat">{leadItem.category}</p>
+              <h2>
+                <Link href={leadItem.href}>{leadItem.title}</Link>
+              </h2>
+              <p className="ed-deck">{leadItem.deck}</p>
+              <p className="ed-byline">{leadItem.meta}</p>
             </div>
-            <div>
-              <dt>Retail</dt>
-              <dd>{formatRetailPrice(featuredRelease.price)}</dd>
-            </div>
-            <div>
-              <dt>SKU</dt>
-              <dd>{featuredRelease.sku || "TBA"}</dd>
-            </div>
-          </dl>
-          <CountdownModule releaseDateCalendar={featuredRelease.release_date_calendar} />
-          <CopDropButtons release={featuredRelease} />
-          <Link className="homepage-primary-link" href={getReleaseUrl(featuredRelease)}>
-            View full release
-          </Link>
-        </div>
-      </section>
+          </article>
+
+          <div className="ed-mosaic__side">
+            {mosaicSide.map((item) => (
+              <article className="ed-side" key={item.key}>
+                <Link href={item.href} className="ed-side__media">
+                  <FeedImage item={item} sizes="(max-width: 900px) 50vw, 19vw" />
+                </Link>
+                <p className="ed-cat">{item.category}</p>
+                <h3>
+                  <Link href={item.href}>{item.title}</Link>
+                </h3>
+                <p className="ed-byline">{item.meta}</p>
+              </article>
+            ))}
+          </div>
+        </section>
       ) : null}
 
-      <section className="calendar-preview" aria-labelledby="calendar-preview-title">
-        <div>
-          <p className="kicker">Release calendar preview</p>
-          <h2 id="calendar-preview-title">Plan the next drops by date.</h2>
-          <p>
-            A cleaner calendar path for release planning, retail checks, and
-            quick jumps into product detail pages.
-          </p>
-          <Link className="homepage-primary-link" href="/calendar">
-            Open calendar
-          </Link>
-        </div>
-        <ol>
-          {calendarPreview.map((release, index) => (
-            <li key={release.id}>
-              {shouldShowMonthDivider(calendarPreview, index) ? (
-                <span className="calendar-preview__month">{getMonthLabel(release)}</span>
-              ) : null}
-              <Image
-                src={getReleaseImage(release)}
-                alt=""
-                width={48}
-                height={48}
-              />
-              <time>{formatReleaseDate(release)}</time>
-              <Link href={getReleaseUrl(release)}>{release.name}</Link>
-              <span>{getBrandName(release)} / {formatRetailPrice(release.price)}</span>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <section className="trending-votes" aria-labelledby="trending-votes-title">
-        <div className="section-heading">
-          <div>
-            <p className="kicker">Trending / Most voted</p>
-            <h2 id="trending-votes-title">The releases collectors are calling.</h2>
-          </div>
-          <p>
-            COP/DROP voting turns release browsing into a quick demand signal
-            before visitors open a detail page.
-          </p>
-        </div>
-        <div className="trending-votes__grid">
-          {trendingReleases.map((release, index) => (
-            <article key={release.id}>
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              <Link href={getReleaseUrl(release)} className="trending-votes__image">
-                <Image
-                  src={getReleaseImage(release)}
-                  alt=""
-                  fill
-                  sizes="(max-width: 640px) 100vw, 25vw"
-                />
+      {strip.length ? (
+        <section className="ed-strip" aria-label="More drops">
+          {strip.map((item) => (
+            <article key={item.key}>
+              <Link href={item.href} className="ed-strip__media">
+                <FeedImage item={item} sizes="(max-width: 900px) 50vw, 24vw" />
               </Link>
-              <p>{getBrandName(release)}</p>
+              <p className="ed-cat">{item.category}</p>
               <h3>
-                <Link href={getReleaseUrl(release)}>{release.name}</Link>
+                <Link href={item.href}>{item.title}</Link>
               </h3>
-              <strong>{getTrendingSignal(release)}</strong>
+              <p className="ed-byline">{item.meta}</p>
             </article>
           ))}
-        </div>
-      </section>
+        </section>
+      ) : null}
 
-      <section className="archive-day" aria-labelledby="archive-day-title">
-        <div>
-          <p className="kicker">Archive & On This Day</p>
-          <h2 id="archive-day-title">A deeper record than the next raffle.</h2>
-          <p>
-            Explore current launches alongside historical SoleInsider release
-            data, date-based discovery, and brand archives that keep old sneaker
-            searches useful.
-          </p>
-          <div className="archive-day__links">
-            <Link href="/sneaker-history">Sneaker history</Link>
-            <Link href="/on-this-day">On this day</Link>
+      <div className="ed-body">
+        <section className="ed-column" aria-labelledby="ed-latest-title">
+          <h2 className="ed-column__title" id="ed-latest-title">
+            Dropping next
+          </h2>
+          <div className="ed-feed">
+            {latestFeed.map((item) => (
+              <article className="ed-row" key={item.key}>
+                <div className="ed-row__body">
+                  <p className="ed-cat">{item.category}</p>
+                  <h3>
+                    <Link href={item.href}>{item.title}</Link>
+                  </h3>
+                  <p className="ed-deck">{item.deck}</p>
+                  <p className="ed-byline">{item.meta}</p>
+                </div>
+                <Link href={item.href} className="ed-row__media">
+                  <FeedImage item={item} sizes="(max-width: 900px) 34vw, 15vw" />
+                </Link>
+              </article>
+            ))}
           </div>
-        </div>
-        <div className="archive-day__list">
-          {archiveReleases.map((release) => (
-            <article key={release.id}>
-              <time>{formatReleaseDate(release)}</time>
-              <h3>
-                <Link href={getReleaseUrl(release)}>{release.name}</Link>
-              </h3>
-              <p>SKU {release.sku || "TBA"} / {getBrandName(release)}</p>
-            </article>
-          ))}
-        </div>
-      </section>
+          <Link className="ed-more" href="/calendar">
+            View all releases
+          </Link>
+        </section>
 
-      <section className="app-download-cta" aria-labelledby="app-download-title">
-        <div>
-          <p className="kicker">Mobile app</p>
-          <h2 id="app-download-title">Release reminders when timing matters.</h2>
-          <p>
-            Get the SoleInsider app for alerts, tracking, comments, and COP/DROP
-            voting while the web stays focused on search and product details.
-          </p>
-        </div>
-        <div className="app-download-cta__actions">
-          <a href={appStoreUrl}>Download on App Store</a>
-          <a href={googlePlayUrl}>Get it on Google Play</a>
-        </div>
-      </section>
+        <section className="ed-column ed-column--popular" aria-labelledby="ed-popular-title">
+          <h2 className="ed-column__title" id="ed-popular-title">
+            Popular
+          </h2>
+          <ol className="ed-popular">
+            {popularFeed.map((release, index) => (
+              <li key={release.id}>
+                <span className="ed-popular__rank">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <Link href={getReleaseUrl(release)} className="ed-popular__media">
+                  <Image
+                    src={getReleaseImage(release)}
+                    alt=""
+                    fill
+                    sizes="(max-width: 900px) 25vw, 10vw"
+                  />
+                </Link>
+                <div>
+                  <p className="ed-cat">{getBrandName(release)}</p>
+                  <h3>
+                    <Link href={getReleaseUrl(release)}>{release.name}</Link>
+                  </h3>
+                  <p className="ed-byline">
+                    {formatReleaseDate(release)} · {formatRetailPrice(release.price)}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <aside className="ed-rail" aria-label="Release desk">
+          <div className="ed-rail__inner">
+            <section className="ed-module ed-module--search">
+              <HeroSearch />
+            </section>
+
+            <section className="ed-module">
+              <h2>Brand ranking</h2>
+              <ol className="ed-ranking">
+                {brandRanking.map((brand, index) => (
+                  <li key={brand.name}>
+                    <span>{index + 1}</span>
+                    <strong>{brand.name}</strong>
+                    <em>{brand.count}</em>
+                  </li>
+                ))}
+              </ol>
+            </section>
+
+            <section className="ed-module">
+              <h2>Release calendar</h2>
+              <ul className="ed-calendar">
+                {calendarPreview.map((release) => (
+                  <li key={release.id}>
+                    <time>{formatReleaseDate(release)}</time>
+                    <Link href={getReleaseUrl(release)}>{release.name}</Link>
+                    <span>
+                      {getBrandName(release)} · {formatRetailPrice(release.price)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <Link className="ed-more" href="/calendar">
+                Open calendar
+              </Link>
+            </section>
+
+            <section className="ed-module ed-module--app">
+              <h2>Release reminders</h2>
+              <p>
+                Alerts, tracking, comments, and COP/DROP voting in the
+                SoleInsider app.
+              </p>
+              <a href={appStoreUrl}>App Store</a>
+              <a href={googlePlayUrl}>Google Play</a>
+            </section>
+          </div>
+        </aside>
+      </div>
 
       <section className="homepage-seo-block" aria-labelledby="homepage-seo-title">
         <p className="kicker">Sneaker release dates</p>
-        <h2 id="homepage-seo-title">SoleInsider tracks release dates, SKUs, prices, and archives.</h2>
+        <h2 id="homepage-seo-title">
+          SoleInsider tracks release dates, SKUs, prices, and archives.
+        </h2>
         <p>
           Use SoleInsider to search upcoming and past sneaker releases, compare
           retail prices, check SKU data, browse a clean sneaker release calendar,
@@ -339,6 +325,74 @@ export default async function Home() {
       </section>
     </main>
   );
+}
+
+function FeedImage({
+  item,
+  priority,
+  sizes,
+}: {
+  item: FeedItem;
+  priority?: boolean;
+  sizes: string;
+}) {
+  // Legacy article covers can point at arbitrary historical CDN hosts, so those
+  // bypass next/image while release imagery keeps optimization.
+  if (item.key.startsWith("article-")) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={item.image} alt="" loading={priority ? "eager" : "lazy"} />;
+  }
+
+  return <Image src={item.image} alt="" fill sizes={sizes} priority={priority} />;
+}
+
+function articleToFeedItem(article: ArticleRecord): FeedItem {
+  const timestamp = Date.parse(`${article.date}T12:00:00`);
+
+  return {
+    key: `article-${article.id}`,
+    href: article.legacyUrl || `/article/${article.slug}`,
+    image: article.image,
+    category: article.category || "Stories",
+    title: article.title,
+    deck: article.deck,
+    meta: `By ${article.author}`,
+    timestamp: Number.isNaN(timestamp) ? 0 : timestamp,
+  };
+}
+
+function releaseToFeedItem(release: LegacyRelease): FeedItem {
+  return {
+    key: releaseKey(release),
+    href: getReleaseUrl(release),
+    image: getReleaseImage(release),
+    category: getBrandName(release),
+    title: release.name,
+    deck:
+      cleanHtmlContent(release.content).slice(0, 140) ||
+      `Releasing ${formatReleaseDate(release)} for ${formatRetailPrice(release.price)}${
+        release.sku ? ` under style code ${release.sku}` : ""
+      }.`,
+    meta: `${formatReleaseDate(release)} · ${formatRetailPrice(release.price)}`,
+    timestamp: getCreatedTimestamp(release),
+  };
+}
+
+function releaseKey(release: LegacyRelease) {
+  return `release-${release.product_id}`;
+}
+
+function getBrandRanking(releases: LegacyRelease[]) {
+  const counts = new Map<string, number>();
+
+  for (const release of releases) {
+    const brand = getBrandName(release);
+    counts.set(brand, (counts.get(brand) ?? 0) + 1);
+  }
+
+  return Array.from(counts, ([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+    .slice(0, 8);
 }
 
 function sortRecentlyAdded(releases: LegacyRelease[]) {
@@ -362,18 +416,6 @@ function getHeroRelease(releases: LegacyRelease[]) {
   );
 }
 
-function getFeaturedRelease(releases: LegacyRelease[], excludeIds: string[]) {
-  return releases
-    .filter((release) => !excludeIds.includes(release.product_id))
-    .slice()
-    .sort(
-      (a, b) =>
-        getTotalVotes(b) - getTotalVotes(a) ||
-        Number(b.yes_votes) - Number(a.yes_votes) ||
-        getCreatedTimestamp(b) - getCreatedTimestamp(a),
-    )[0];
-}
-
 function getCalendarPreview(releases: LegacyRelease[], fallback: LegacyRelease) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -383,31 +425,6 @@ function getCalendarPreview(releases: LegacyRelease[], fallback: LegacyRelease) 
     .slice(0, 6);
 
   return upcoming.length ? upcoming : releases.slice(0, 6).concat(fallback).slice(0, 6);
-}
-
-function getTrendingReleases(releases: LegacyRelease[], excludeIds: string[]) {
-  return releases
-    .filter((release) => !excludeIds.includes(release.product_id))
-    .slice()
-    .sort((a, b) => getTotalVotes(b) - getTotalVotes(a))
-    .slice(0, 4);
-}
-
-function getArchiveReleases(releases: LegacyRelease[], fallback: LegacyRelease) {
-  const today = new Date();
-  const monthDay = `${today.getMonth() + 1}-${today.getDate()}`;
-  const sameDay = releases
-    .filter((release) => getReleaseMonthDay(release) === monthDay)
-    .slice(0, 3);
-
-  if (sameDay.length) return sameDay;
-
-  const oldest = releases
-    .slice()
-    .sort((a, b) => getReleaseTimestamp(a) - getReleaseTimestamp(b))
-    .slice(0, 3);
-
-  return oldest.length ? oldest : [fallback];
 }
 
 function getCreatedTimestamp(release: LegacyRelease) {
@@ -426,16 +443,6 @@ function getReleaseTimestamp(release: LegacyRelease) {
   return new Date(year, month - 1, day).getTime();
 }
 
-function getReleaseMonthDay(release: LegacyRelease) {
-  const match = release.release_date_calendar.match(/^(\d{4}),(\d{1,2}),(\d{1,2})/);
-
-  if (!match) return "";
-
-  const [, , month, day] = match.map(Number);
-
-  return `${month}-${day}`;
-}
-
 function formatRetailPrice(price: string) {
   const numericPrice = Number(price);
 
@@ -446,35 +453,4 @@ function formatRetailPrice(price: string) {
 
 function getTotalVotes(release: LegacyRelease) {
   return Number(release.yes_votes) + Number(release.no_votes);
-}
-
-function getTrendingSignal(release: LegacyRelease) {
-  const votes = Number(release.yes_votes);
-
-  if (votes < 25) {
-    return "Trending";
-  }
-
-  return `${votes.toLocaleString()} COP ${votes === 1 ? "vote" : "votes"}`;
-}
-
-function shouldShowMonthDivider(releases: LegacyRelease[], index: number) {
-  if (index === 0) return true;
-
-  return getMonthLabel(releases[index]) !== getMonthLabel(releases[index - 1]);
-}
-
-function getMonthLabel(release: LegacyRelease) {
-  const match = release.release_date_calendar.match(/^(\d{4}),(\d{1,2}),(\d{1,2})/);
-
-  if (!match) {
-    return "Date TBA";
-  }
-
-  const [, year, month] = match.map(Number);
-
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    year: "numeric",
-  }).format(new Date(year, month - 1, 1));
 }

@@ -131,14 +131,6 @@ export function ReleaseDetailView({
                 <dt>Style Code</dt>
                 <dd className="release-specs__style-code">{release.sku || "TBA"}</dd>
               </div>
-              <div>
-                <dt>Retail</dt>
-                <dd>${release.price}</dd>
-              </div>
-              <div>
-                <dt>Release Date</dt>
-                <dd>{formatReleaseDate(release)}</dd>
-              </div>
             </dl>
           </section>
         </div>
