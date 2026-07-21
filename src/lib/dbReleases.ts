@@ -227,6 +227,63 @@ export async function searchDbReleasesForPage(search: string, limit = 60) {
   }
 }
 
+export async function getDbMostVotedReleases(limit = 6) {
+  try {
+    const rows = await prisma.$queryRaw<DbReleaseRow[]>`
+      SELECT
+        p.id,
+        p.name,
+        p.description,
+        p.content,
+        p.sku,
+        p.image,
+        p.link,
+        p.slug,
+        p.price,
+        p.views,
+        p.type,
+        p.stockx_highest_bid,
+        p.stockx_total_dollars,
+        p.stockx_lowest_ask,
+        p.stockx_last_sale,
+        p.stockx_deadstock_sold,
+        p.stockx_sales_last_72,
+        r.release_date AS release_date_raw,
+        p.created_at,
+        p.id AS product_id,
+        COALESCE(yes_votes.yes_votes, 0) AS yes_votes,
+        COALESCE(no_votes.no_votes, 0) AS no_votes
+      FROM products p
+      INNER JOIN releases r ON r.product_id = p.id
+      LEFT JOIN (
+        SELECT product_id, COUNT(status) AS yes_votes
+        FROM release_interest
+        WHERE status = 1
+        GROUP BY product_id
+      ) yes_votes ON yes_votes.product_id = p.id
+      LEFT JOIN (
+        SELECT product_id, COUNT(status) AS no_votes
+        FROM release_interest
+        WHERE status = 0
+        GROUP BY product_id
+      ) no_votes ON no_votes.product_id = p.id
+      -- Upcoming only: the all-time vote leaders are decade-old legacy rows
+      -- whose images are long dead, and the lead should be a drop you can
+      -- still cop.
+      WHERE p.type = 'sneakers'
+        AND COALESCE(p.image, '') <> ''
+        AND r.release_date >= CURRENT_DATE
+      ORDER BY COALESCE(yes_votes.yes_votes, 0) DESC, r.release_date ASC, p.id DESC
+      LIMIT ${Math.max(1, Math.min(limit, 24))}
+    `;
+
+    return rows.map(mapDbReleaseToLegacyRelease);
+  } catch (error) {
+    console.warn("Unable to read most-voted releases.", error);
+    return [];
+  }
+}
+
 export async function getDbUpcomingReleases(limit = 20) {
   try {
     const rows = await prisma.$queryRaw<DbReleaseRow[]>`

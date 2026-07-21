@@ -6058,3 +6058,700 @@ h2,
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Search field: the GO affordance became a <button> when the field started
+   submitting to /search, so it needs the styling the old <span> carried. */
+.hero-search__field button {
+  display: inline-flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 20px;
+  border: 0;
+  background: var(--color-accent);
+  color: #fff;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.hero-search__field button:hover {
+  background: var(--color-text);
+}
+
+.hero-search__field {
+  border-width: 2px;
+  border-radius: 14px;
+}
+
+/* In the narrow rail the placeholder was being clipped mid-word. */
+.hero-search input {
+  min-height: 52px;
+  padding: 0 16px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  text-overflow: ellipsis;
+}
+
+.hero-search p {
+  color: rgba(16, 17, 20, 0.5);
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.hero-search label {
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+}
+
+/* Countdown readability: accent blue on near-black measured about 2:1, so the
+   digits go white and blue stays on the CTA where it sits on its own. */
+.countdown-cell strong,
+.live-countdown strong {
+  color: #fff;
+  font-size: clamp(1.6rem, 3.4vw, 2.6rem);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.countdown-cell span,
+.live-countdown span {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.countdown-cell i {
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 1.4rem;
+}
+
+.countdown-module {
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.countdown-module p {
+  margin-bottom: 14px;
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.countdown-grid {
+  gap: 6px;
+}
+
+.countdown-reminder-link {
+  min-height: 46px;
+  margin-top: 18px;
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+}
+
+/* Score cards link through to the game page. */
+.score-list li {
+  list-style: none;
+}
+
+a.score-card {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+a.score-card:hover {
+  border-color: var(--color-accent);
+}
+
+.score-card__venue span {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   Game detail
+   ========================================================================== */
+
+.game-page > .game-hero,
+.game-page > .ed-body {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+}
+
+.ed-masthead .ed-cat a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.game-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 26px;
+  align-items: center;
+  padding: 26px 0;
+}
+
+.game-score {
+  display: grid;
+  gap: 14px;
+}
+
+.game-score__team {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(16, 17, 20, 0.12);
+}
+
+.game-score__team img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
+
+.game-score__team strong {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.game-score__team span {
+  color: rgba(16, 17, 20, 0.45);
+  font-size: 0.76rem;
+}
+
+.game-score__team em {
+  font-size: 2rem;
+  font-style: normal;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.game-venue-media {
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  background: var(--surface-soft);
+}
+
+.game-venue-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.game-body {
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+}
+
+.game-section {
+  margin-top: 38px;
+}
+
+.odds-list {
+  display: grid;
+  gap: 14px;
+}
+
+.odds-card {
+  padding: 18px;
+  border: 1px solid rgba(16, 17, 20, 0.12);
+}
+
+.odds-card dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+}
+
+.odds-card dt {
+  color: rgba(16, 17, 20, 0.45);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.odds-card dd {
+  margin: 4px 0 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.leader-list,
+.injury-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.leader-list li {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 13px 0;
+  border-bottom: 1px solid rgba(16, 17, 20, 0.1);
+}
+
+.leader-list img,
+.leader-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  object-fit: cover;
+}
+
+.leader-list strong {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.leader-list span {
+  color: rgba(16, 17, 20, 0.45);
+  font-size: 0.74rem;
+}
+
+.leader-stat {
+  text-align: right;
+}
+
+.leader-stat em {
+  display: block;
+  font-size: 1.1rem;
+  font-style: normal;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.injury-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(16, 17, 20, 0.1);
+}
+
+.injury-list strong {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.injury-list span {
+  color: rgba(16, 17, 20, 0.45);
+  font-size: 0.74rem;
+}
+
+.injury-status {
+  color: var(--color-accent) !important;
+  font-size: 0.72rem !important;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.game-info {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+
+.game-info div {
+  display: grid;
+  grid-template-columns: minmax(90px, 0.5fr) minmax(0, 1fr);
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(16, 17, 20, 0.07);
+}
+
+.game-info div:last-child {
+  border-bottom: 0;
+}
+
+.game-info dt {
+  color: rgba(16, 17, 20, 0.45);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.game-info dd {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.game-tickets {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.game-tickets a {
+  padding: 10px 14px;
+  border: 1px solid rgba(16, 17, 20, 0.14);
+  border-radius: 999px;
+  color: var(--color-text);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  transition: border-color 160ms ease, color 160ms ease;
+}
+
+.game-tickets a:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.lastfive-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lastfive-list li {
+  display: grid;
+  gap: 6px;
+}
+
+.lastfive-list strong {
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.lastfive-chip {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 5px;
+  border-radius: 6px;
+  background: var(--surface-soft);
+  color: var(--color-text);
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.lastfive-chip--w {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.lastfive-chip--l {
+  background: rgba(16, 17, 20, 0.1);
+}
+
+@media (max-width: 900px) {
+  .game-hero,
+  .game-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .odds-card dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Nav: secondary login action beside the app CTA. */
+.nav__login {
+  padding: 10px 16px;
+  border: 1px solid rgba(16, 17, 20, 0.18);
+  border-radius: 999px;
+  color: var(--color-text);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 160ms ease, color 160ms ease;
+}
+
+.nav__login:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* The league rail grew past a single row. */
+.sports-leagues {
+  gap: 7px;
+}
+
+.sports-leagues a {
+  padding: 8px 15px;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+}
+
+/* Most-voted lead badge on the homepage. */
+.ed-cat--voted {
+  color: var(--color-accent);
+}
+
+/* ==========================================================================
+   Login
+   ========================================================================== */
+
+.login-page > .login-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 32px 0 60px;
+}
+
+.login-notice {
+  padding: 24px;
+  border-left: 3px solid var(--color-accent);
+  background: var(--surface-soft);
+}
+
+.login-notice strong {
+  display: block;
+  margin-bottom: 8px;
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.login-notice p {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.login-form fieldset {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.login-form fieldset:disabled {
+  opacity: 0.55;
+}
+
+.login-form label {
+  margin-top: 10px;
+  color: rgba(16, 17, 20, 0.5);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.login-form input {
+  padding: 13px 16px;
+  border: 1px solid rgba(16, 17, 20, 0.18);
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.95rem;
+}
+
+.login-google {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  padding: 13px 18px;
+  border: 1px solid rgba(16, 17, 20, 0.18);
+  border-radius: 999px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.login-divider {
+  position: relative;
+  margin: 14px 0 4px;
+  text-align: center;
+}
+
+.login-divider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(16, 17, 20, 0.12);
+}
+
+.login-divider span {
+  position: relative;
+  padding: 0 12px;
+  background: #fff;
+  color: rgba(16, 17, 20, 0.45);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.login-submit {
+  margin-top: 16px;
+  padding: 14px 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: #fff;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.login-foot {
+  margin: 18px 0 0;
+  color: rgba(16, 17, 20, 0.5);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.login-foot a {
+  color: var(--color-accent);
+}
+
+@media (max-width: 860px) {
+  .login-page > .login-panel {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+}
+
+.nav__links-login {
+  display: none;
+}
+
+@media (max-width: 1080px) {
+  .nav__login {
+    display: none;
+  }
+
+  .nav__links-login {
+    display: block;
+    color: var(--color-accent) !important;
+  }
+}
+
+/* ==========================================================================
+   Store badges + footer download band
+   ========================================================================== */
+
+.store-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+/* `.editorial-home a { color: inherit }` outranks a single class, so the badge
+   colour has to be stated at equal-or-higher specificity. */
+.editorial-home .store-badge,
+.footer .store-badge,
+.store-badge {
+  display: inline-flex;
+  gap: 12px;
+  align-items: center;
+  min-width: 196px;
+  padding: 11px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 10px;
+  background: #000;
+  color: #fff;
+  text-decoration: none;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.store-badge:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-1px);
+}
+
+.store-badge span {
+  display: grid;
+  gap: 1px;
+}
+
+.store-badge em {
+  font-size: 0.63rem;
+  font-style: normal;
+  letter-spacing: 0.04em;
+  opacity: 0.78;
+  text-transform: uppercase;
+}
+
+.store-badge strong {
+  font-size: 1.06rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.1;
+}
+
+.store-badges--large .store-badge {
+  min-width: 220px;
+  padding: 13px 24px;
+}
+
+.footer__download {
+  display: grid;
+  gap: 16px;
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 32px 0 34px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.footer__download h2 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(1.25rem, 2.2vw, 1.65rem);
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  color: #fff;
+}
+
+/* On the light /app page the badge sits on white, so it needs its own border. */
+.app-page .store-badge {
+  border-color: rgba(16, 17, 20, 0.16);
+}
+
+@media (max-width: 520px) {
+  .store-badge {
+    min-width: 0;
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+}

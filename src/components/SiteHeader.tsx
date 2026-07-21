@@ -45,6 +45,14 @@ export function SiteHeader() {
               {item.label}
             </Link>
           ))}
+          {/* The pill is hidden on small screens, so the drawer carries it. */}
+          <Link
+            className="nav__links-login"
+            href="/login"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Log in
+          </Link>
         </nav>
 
         <div className="nav__actions">
@@ -53,6 +61,9 @@ export function SiteHeader() {
           </Link>
           <Link className="nav__cta" href="/app">
             Get the app
+          </Link>
+          <Link className="nav__login" href="/login">
+            Log in
           </Link>
         </div>
       </div>

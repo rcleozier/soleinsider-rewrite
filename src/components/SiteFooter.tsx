@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { StoreBadges } from "@/components/StoreBadges";
 import {
   appStoreUrl,
   googlePlayUrl,
@@ -71,6 +72,11 @@ export function SiteFooter() {
           ))}
         </nav>
       </div>
+
+      <section className="footer__download" aria-labelledby="footer-download-title">
+        <h2 id="footer-download-title">Download the SoleInsider app</h2>
+        <StoreBadges />
+      </section>
 
       <div className="footer__bar">
         <span>

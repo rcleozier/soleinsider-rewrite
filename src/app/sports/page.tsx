@@ -43,7 +43,7 @@ export default async function SportsPage({ searchParams }: SportsPageProps) {
   const teamAbbreviations = games.flatMap((game) =>
     game.teams.map((team) => team.abbreviation),
   );
-  const athletes = getSignatureAthletesForTeams(teamAbbreviations);
+  const athletes = getSignatureAthletesForTeams(teamAbbreviations, active.slug);
 
   const [signatures, gameDayDrops] = await Promise.all([
     getSignatureReleases(athletes),
@@ -82,7 +82,11 @@ export default async function SportsPage({ searchParams }: SportsPageProps) {
           {games.length ? (
             <ol className="score-list">
               {games.map((game) => (
-                <li className="score-card" key={game.id}>
+                <li key={game.id}>
+                  <Link
+                    className="score-card"
+                    href={`/sports/${game.leagueSlug}/${game.id}`}
+                  >
                   <div className="score-card__head">
                     <span className={`score-status score-status--${game.statusState}`}>
                       {game.statusState === "in" ? "Live" : game.status}
@@ -109,7 +113,11 @@ export default async function SportsPage({ searchParams }: SportsPageProps) {
                     ))}
                   </div>
 
-                  {game.venue ? <p className="score-card__venue">{game.venue}</p> : null}
+                  <p className="score-card__venue">
+                    {game.venue ? `${game.venue} · ` : ""}
+                    <span>Game details, odds &amp; sneakers</span>
+                  </p>
+                  </Link>
                 </li>
               ))}
             </ol>

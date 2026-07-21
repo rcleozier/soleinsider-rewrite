@@ -6,6 +6,7 @@ import type { ArticleRecord } from "@/lib/dbArticles";
 import { getDbArticles } from "@/lib/dbArticles";
 import type { LegacyRelease } from "@/lib/legacyMobileApi";
 import {
+  getDbMostVotedReleases,
   getDbSneakerReleasesRecentlyAdded,
   getDbUpcomingReleases,
 } from "@/lib/dbReleases";
@@ -45,9 +46,10 @@ type FeedItem = {
 };
 
 export default async function Home() {
-  const [dbReleases, dbUpcoming, dbArticles] = await Promise.all([
+  const [dbReleases, dbUpcoming, dbMostVoted, dbArticles] = await Promise.all([
     getDbSneakerReleasesRecentlyAdded(48),
     getDbUpcomingReleases(20),
+    getDbMostVotedReleases(4),
     getDbArticles(40),
   ]);
   const releases = sortRecentlyAdded(dbReleases);
@@ -71,11 +73,15 @@ export default async function Home() {
   const articleItems = dbArticles.map(articleToFeedItem);
   const releaseItems = releases.map(releaseToFeedItem);
 
-  // The lead mosaic prefers editorial coverage, then falls back to release data
-  // so the homepage never renders empty while the article table backfills.
-  const mosaicSource = articleItems.length >= 3 ? articleItems : releaseItems;
-  const [leadItem, ...mosaicRest] = mosaicSource;
-  const mosaicSide = mosaicRest.slice(0, 2);
+  // The lead is the most-voted sneaker in the archive; the two side slots stay
+  // editorial, falling back to releases while the article table backfills.
+  const votedItems = dbMostVoted.map(releaseToFeedItem);
+  const leadItem = votedItems[0] ?? articleItems[0] ?? releaseItems[0];
+  const leadVotes = dbMostVoted[0] ? Number(dbMostVoted[0].yes_votes) : 0;
+  const sideSource = articleItems.length >= 2 ? articleItems : releaseItems;
+  const mosaicSide = sideSource
+    .filter((item) => item.key !== leadItem?.key)
+    .slice(0, 2);
   const usedKeys = new Set([leadItem?.key, ...mosaicSide.map((item) => item.key)]);
 
   // "Dropping next" is the priority feed: soonest upcoming release date first,
@@ -151,7 +157,11 @@ export default async function Home() {
               <FeedImage item={leadItem} priority sizes="(max-width: 900px) 100vw, 62vw" />
             </Link>
             <div className="ed-lead__body">
-              <p className="ed-cat">{leadItem.category}</p>
+              <p className="ed-cat ed-cat--voted">
+                {leadVotes > 0
+                  ? `Most wanted · ${leadVotes.toLocaleString()} COP votes`
+                  : leadItem.category}
+              </p>
               <h2>
                 <Link href={leadItem.href}>{leadItem.title}</Link>
               </h2>

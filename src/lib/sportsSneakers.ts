@@ -8,29 +8,30 @@ import { mapDbReleaseToLegacyRelease, type DbReleaseRow } from "@/lib/dbReleases
 type SignatureAthlete = {
   athlete: string;
   team: string;
+  league: string;
   line: string;
   match: string[];
 };
 
 const signatureAthletes: SignatureAthlete[] = [
-  { athlete: "LeBron James", team: "LAL", line: "Nike LeBron", match: ["lebron"] },
-  { athlete: "Kevin Durant", team: "HOU", line: "Nike KD", match: ["kd "] },
-  { athlete: "Giannis Antetokounmpo", team: "MIL", line: "Nike Giannis", match: ["giannis"] },
-  { athlete: "Luka Doncic", team: "LAL", line: "Jordan Luka", match: ["luka"] },
-  { athlete: "Jayson Tatum", team: "BOS", line: "Jordan Tatum", match: ["tatum"] },
-  { athlete: "Stephen Curry", team: "GS", line: "Curry Brand", match: ["curry"] },
-  { athlete: "Ja Morant", team: "MEM", line: "Nike Ja", match: ["ja morant", "nike ja "] },
-  { athlete: "Zion Williamson", team: "NO", line: "Jordan Zion", match: ["zion"] },
-  { athlete: "Devin Booker", team: "PHX", line: "Nike Book", match: ["book 1", "booker"] },
-  { athlete: "Anthony Edwards", team: "MIN", line: "adidas AE", match: ["ae 1", "ae 2", "anthony edwards"] },
-  { athlete: "Donovan Mitchell", team: "CLE", line: "adidas D.O.N.", match: ["d.o.n.", "don issue"] },
-  { athlete: "Damian Lillard", team: "POR", line: "adidas Dame", match: ["dame "] },
-  { athlete: "Kobe Bryant", team: "LAL", line: "Nike Kobe", match: ["kobe"] },
-  { athlete: "Kyrie Irving", team: "DAL", line: "Nike Kyrie", match: ["kyrie"] },
-  { athlete: "Paul George", team: "PHI", line: "Nike PG", match: ["pg 6", "pg 7", "paul george"] },
-  { athlete: "Sabrina Ionescu", team: "NY", line: "Nike Sabrina", match: ["sabrina"] },
-  { athlete: "A'ja Wilson", team: "LV", line: "Nike A'One", match: ["a'one", "a one"] },
-  { athlete: "Michael Jordan", team: "CHI", line: "Air Jordan", match: ["air jordan"] },
+  { athlete: "LeBron James", team: "LAL", league: "nba", line: "Nike LeBron", match: ["lebron"] },
+  { athlete: "Kevin Durant", team: "HOU", league: "nba", line: "Nike KD", match: ["kd "] },
+  { athlete: "Giannis Antetokounmpo", team: "MIL", league: "nba", line: "Nike Giannis", match: ["giannis"] },
+  { athlete: "Luka Doncic", team: "LAL", league: "nba", line: "Jordan Luka", match: ["luka"] },
+  { athlete: "Jayson Tatum", team: "BOS", league: "nba", line: "Jordan Tatum", match: ["tatum"] },
+  { athlete: "Stephen Curry", team: "GS", league: "nba", line: "Curry Brand", match: ["curry"] },
+  { athlete: "Ja Morant", team: "MEM", league: "nba", line: "Nike Ja", match: ["ja morant", "nike ja "] },
+  { athlete: "Zion Williamson", team: "NO", league: "nba", line: "Jordan Zion", match: ["zion"] },
+  { athlete: "Devin Booker", team: "PHX", league: "nba", line: "Nike Book", match: ["book 1", "booker"] },
+  { athlete: "Anthony Edwards", team: "MIN", league: "nba", line: "adidas AE", match: ["ae 1", "ae 2", "anthony edwards"] },
+  { athlete: "Donovan Mitchell", team: "CLE", league: "nba", line: "adidas D.O.N.", match: ["d.o.n.", "don issue"] },
+  { athlete: "Damian Lillard", team: "POR", league: "nba", line: "adidas Dame", match: ["dame "] },
+  { athlete: "Kobe Bryant", team: "LAL", league: "nba", line: "Nike Kobe", match: ["kobe"] },
+  { athlete: "Kyrie Irving", team: "DAL", league: "nba", line: "Nike Kyrie", match: ["kyrie"] },
+  { athlete: "Paul George", team: "PHI", league: "nba", line: "Nike PG", match: ["pg 6", "pg 7", "paul george"] },
+  { athlete: "Sabrina Ionescu", team: "NY", league: "wnba", line: "Nike Sabrina", match: ["sabrina"] },
+  { athlete: "A'ja Wilson", team: "LV", league: "wnba", line: "Nike A'One", match: ["a'one", "a one"] },
+  { athlete: "Michael Jordan", team: "CHI", league: "nba", line: "Air Jordan", match: ["air jordan"] },
 ];
 
 export type SignatureMatch = {
@@ -39,10 +40,20 @@ export type SignatureMatch = {
   releases: LegacyRelease[];
 };
 
-export function getSignatureAthletesForTeams(abbreviations: string[]) {
+/**
+ * Team abbreviations collide across leagues (MIN, CLE, and BOS all exist in the
+ * NBA and MLB), so the league must be part of the match or basketball players
+ * leak onto baseball pages.
+ */
+export function getSignatureAthletesForTeams(
+  abbreviations: string[],
+  leagueSlug: string,
+) {
   const wanted = new Set(abbreviations.filter(Boolean));
 
-  return signatureAthletes.filter((athlete) => wanted.has(athlete.team));
+  return signatureAthletes.filter(
+    (athlete) => athlete.league === leagueSlug && wanted.has(athlete.team),
+  );
 }
 
 /**
