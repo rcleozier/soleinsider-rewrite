@@ -68,6 +68,9 @@ export default async function SportsPage({ searchParams }: SportsPageProps) {
             href={`/sports?league=${option.slug}`}
             key={option.slug}
           >
+            {/* ESPN league badges come from a CDN outside next/image config. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img alt="" loading="lazy" src={option.logo} />
             {option.label}
           </Link>
         ))}

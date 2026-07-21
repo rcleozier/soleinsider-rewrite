@@ -1,11 +1,6 @@
 import Link from "next/link";
 import { StoreBadges } from "@/components/StoreBadges";
-import {
-  appStoreUrl,
-  googlePlayUrl,
-  navigation,
-  siteName,
-} from "@/lib/siteData";
+import { navigation, siteName } from "@/lib/siteData";
 
 const brandLinks = [
   { href: "/nike-releases", label: "Nike" },
@@ -35,13 +30,6 @@ export function SiteFooter() {
             Sneaker release dates, streetwear stories, and buyer guides for
             collectors who care about timing.
           </p>
-          <Link className="footer__cta" href="/app">
-            Get the app
-          </Link>
-          <div className="footer__stores">
-            <a href={appStoreUrl}>iOS</a>
-            <a href={googlePlayUrl}>Android</a>
-          </div>
         </section>
 
         <nav className="footer__col" aria-label="Explore">

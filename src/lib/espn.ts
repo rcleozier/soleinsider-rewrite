@@ -24,18 +24,77 @@ export type EspnGame = {
   headline: string | null;
 };
 
+// Logo hrefs come from each league's ESPN scoreboard `leagues[0].logos`. The
+// three NCAA entries have no distinct league badge on ESPN, only a generic
+// sport icon, so NCAAM/NCAAW share the basketball icon and NCAAF uses the
+// college-football icon.
 export const espnLeagues = [
-  { slug: "nba", sport: "basketball", label: "NBA" },
-  { slug: "nfl", sport: "football", label: "NFL" },
-  { slug: "mlb", sport: "baseball", label: "MLB" },
-  { slug: "nhl", sport: "hockey", label: "NHL" },
-  { slug: "wnba", sport: "basketball", label: "WNBA" },
-  { slug: "mens-college-basketball", sport: "basketball", label: "NCAAM" },
-  { slug: "womens-college-basketball", sport: "basketball", label: "NCAAW" },
-  { slug: "college-football", sport: "football", label: "NCAAF" },
-  { slug: "usa.1", sport: "soccer", label: "MLS" },
-  { slug: "eng.1", sport: "soccer", label: "PREMIER LEAGUE" },
-  { slug: "uefa.champions", sport: "soccer", label: "UCL" },
+  {
+    slug: "nba",
+    sport: "basketball",
+    label: "NBA",
+    logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nba.png",
+  },
+  {
+    slug: "nfl",
+    sport: "football",
+    label: "NFL",
+    logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png",
+  },
+  {
+    slug: "mlb",
+    sport: "baseball",
+    label: "MLB",
+    logo: "https://a.espncdn.com/i/teamlogos/leagues/500/mlb.png",
+  },
+  {
+    slug: "nhl",
+    sport: "hockey",
+    label: "NHL",
+    logo: "https://a.espncdn.com/i/teamlogos/leagues/500/nhl.png",
+  },
+  {
+    slug: "wnba",
+    sport: "basketball",
+    label: "WNBA",
+    logo: "https://a.espncdn.com/i/teamlogos/leagues/500/wnba.png",
+  },
+  {
+    slug: "mens-college-basketball",
+    sport: "basketball",
+    label: "NCAAM",
+    logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-basketball.png",
+  },
+  {
+    slug: "womens-college-basketball",
+    sport: "basketball",
+    label: "NCAAW",
+    logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-basketball.png",
+  },
+  {
+    slug: "college-football",
+    sport: "football",
+    label: "NCAAF",
+    logo: "https://a.espncdn.com/redesign/assets/img/icons/ESPN-icon-football-college.png",
+  },
+  {
+    slug: "usa.1",
+    sport: "soccer",
+    label: "MLS",
+    logo: "https://a.espncdn.com/i/leaguelogos/soccer/500/19.png",
+  },
+  {
+    slug: "eng.1",
+    sport: "soccer",
+    label: "PREMIER LEAGUE",
+    logo: "https://a.espncdn.com/i/leaguelogos/soccer/500/23.png",
+  },
+  {
+    slug: "uefa.champions",
+    sport: "soccer",
+    label: "UCL",
+    logo: "https://a.espncdn.com/i/leaguelogos/soccer/500/2.png",
+  },
 ] as const;
 
 export type EspnLeagueSlug = (typeof espnLeagues)[number]["slug"];
