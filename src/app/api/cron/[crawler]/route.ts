@@ -1,11 +1,11 @@
-import path from "node:path";
-import { createRequire } from "node:module";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-const require = createRequire(import.meta.url);
+const execFileAsync = promisify(execFile);
 
 const crawlers = {
   kith: "kithMondayProgram.js",
@@ -82,26 +82,16 @@ async function runCron(request: Request, crawler: string) {
 }
 
 async function runCrawler(crawler: CrawlerName) {
-  const filePath = path.join(process.cwd(), "scripts", "crawlers", "legacy", crawlers[crawler]);
-  const module = require(filePath) as {
-    run: (url?: string, page?: number) => Promise<unknown> | void;
-  };
+  const normalizedCrawler =
+    crawler === "kith-monday-program" ? "kith" : crawler === "sole-retriever" ? "soleretriever" : crawler;
+  const runner = `${process.cwd()}/scripts/run-crawler.mjs`;
 
-  if (crawler !== "kicksonfire") {
-    await module.run();
-    return;
-  }
-
-  const startPage = Number(process.env.KICKSONFIRE_START_PAGE || 1);
-  const pages = Number(process.env.KICKSONFIRE_PAGES || 3);
-  const waitMs = Number(process.env.KICKSONFIRE_PAGE_WAIT_MS || 60_000);
-
-  for (let offset = 0; offset < pages; offset += 1) {
-    const page = startPage + offset;
-    const url = `https://www.kicksonfire.com/sneaker-release-dates?page=${page}`;
-    module.run(url, page);
-    await delay(waitMs);
-  }
+  await execFileAsync(process.execPath, [runner, normalizedCrawler], {
+    cwd: process.cwd(),
+    env: process.env,
+    timeout: Number(process.env.CRAWLER_ROUTE_TIMEOUT_MS || 290_000),
+    maxBuffer: 1024 * 1024 * 8,
+  });
 }
 
 function isCrawlerName(crawler: string): crawler is CrawlerName {
@@ -119,8 +109,4 @@ function isAuthorizedCronRequest(request: Request) {
     request.headers.get("x-cron-secret") === secret ||
     request.headers.get("authorization") === `Bearer ${secret}`
   );
-}
-
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

@@ -6,9 +6,11 @@ import type { LegacyRelease } from "@/lib/legacyMobileApi";
 export function CopDropButtons({
   release,
   showPercentages = true,
+  variant = "solid",
 }: {
   release: LegacyRelease;
   showPercentages?: boolean;
+  variant?: "solid" | "secondary";
 }) {
   const [votes, setVotes] = useState(() => ({
     yes: Number(release.yes_votes) || 0,
@@ -18,7 +20,7 @@ export function CopDropButtons({
   const percentages = useMemo(() => getPercentages(votes.yes, votes.no), [votes]);
   const totalVotes = votes.yes + votes.no;
   const shouldShowPercentages = showPercentages && totalVotes >= 10;
-  const shouldShowStatus = shouldShowPercentages || totalVotes < 10 || feedback;
+  const shouldShowStatus = totalVotes < 10 || feedback;
 
   async function submitVote(status: "1" | "0") {
     const previousVotes = votes;
@@ -62,32 +64,24 @@ export function CopDropButtons({
 
   return (
     <div
-      className="vote-actions"
+      className={variant === "secondary" ? "vote-actions vote-actions--secondary" : "vote-actions"}
       aria-label={`COP or DROP ${release.name}`}
       data-feedback={feedback}
     >
       <div className="vote-actions__buttons">
         <button onClick={() => submitVote("1")} type="button">
           <span aria-hidden="true">▲</span>
-          COP
-          <strong>{votes.yes}</strong>
+          {shouldShowPercentages ? `COP · ${percentages.yes}%` : "COP"}
+          {!shouldShowPercentages && totalVotes >= 10 ? <strong>{votes.yes}</strong> : null}
         </button>
         <button onClick={() => submitVote("0")} type="button">
           <span aria-hidden="true">▼</span>
-          DROP
-          <strong>{votes.no}</strong>
+          {shouldShowPercentages ? `DROP · ${percentages.no}%` : "DROP"}
+          {!shouldShowPercentages && totalVotes >= 10 ? <strong>{votes.no}</strong> : null}
         </button>
       </div>
       {shouldShowStatus ? (
         <p aria-live="polite">
-          {shouldShowPercentages ? (
-            <>
-              <span className={percentages.yes >= 70 ? "vote-actions__cop-strong" : undefined}>
-                {percentages.yes}% COP
-              </span>
-              <span>{percentages.no}% DROP</span>
-            </>
-          ) : null}
           {totalVotes < 10 ? <span>Be the first to vote</span> : null}
           {feedback ? <span>{feedback}</span> : null}
         </p>

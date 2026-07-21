@@ -30,10 +30,10 @@ for (const crawler of selected) {
 }
 
 async function runCrawler(crawler) {
-  const module = require(path.join(root, "scripts", "crawlers", "legacy", crawlerFiles[crawler]));
+  const crawlerModule = require(path.join(root, "scripts", "crawlers", "legacy", crawlerFiles[crawler]));
 
   if (crawler !== "kicksonfire") {
-    await module.run();
+    await crawlerModule.run();
     return;
   }
 
@@ -44,7 +44,7 @@ async function runCrawler(crawler) {
   for (let offset = 0; offset < pages; offset += 1) {
     const page = startPage + offset;
     const url = `https://www.kicksonfire.com/sneaker-release-dates?page=${page}`;
-    module.run(url, page);
+    crawlerModule.run(url, page);
     await delay(waitMs);
   }
 }

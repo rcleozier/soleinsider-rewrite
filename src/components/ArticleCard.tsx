@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import type { ArticleRecord } from "@/lib/dbArticles";
 
 export function ArticleCard({ article }: { article: ArticleRecord }) {
@@ -8,11 +7,11 @@ export function ArticleCard({ article }: { article: ArticleRecord }) {
   return (
     <article className="article-card">
       <Link href={href} className="article-card__media">
-        <Image
+        {/* Legacy article exports can reference arbitrary historical CDN hosts. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src={article.image}
           alt=""
-          fill
-          sizes="(max-width: 640px) 100vw, (max-width: 980px) 50vw, 33vw"
         />
         <span>{article.category}</span>
       </Link>

@@ -1,3 +1,4 @@
+/* eslint-disable */
 const cheerio = require("cheerio");
 const axios = require("axios");
 const md5 = require("md5");

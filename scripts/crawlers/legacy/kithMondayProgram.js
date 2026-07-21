@@ -1,3 +1,4 @@
+/* eslint-disable */
 const axios = require("axios");
 const md5 = require("md5");
 const querystring = require("querystring");

@@ -9,6 +9,7 @@ import {
 } from "@/lib/dbReleases";
 import {
   buildMetadata,
+  cleanHtmlContent,
   formatReleaseDate,
   getReleaseImage,
 } from "@/lib/siteData";
@@ -34,11 +35,11 @@ export async function generateMetadata({
     return {};
   }
 
+  const description = getMetaDescription(release);
+
   return buildMetadata({
-    title: `${release.name} Release Date`,
-    description: `${release.name} releases ${formatReleaseDate(
-      release,
-    )} for $${release.price}. See SKU, retail price, COP/DROP votes, and launch details.`,
+    title: `${release.name} Release Date, Price & Style Code — SoleInsider`,
+    description,
     path: `/${release.slug}/${release.product_id}`,
     image: getReleaseImage(release),
   });
@@ -67,4 +68,20 @@ export default async function LegacyReleaseDetailPage({
       relatedProducts={dbRelatedProducts}
     />
   );
+}
+
+function getMetaDescription(release: Awaited<ReturnType<typeof getDbReleaseBySlugAndId>> & {}) {
+  if (!release) {
+    return "";
+  }
+
+  const cleaned = cleanHtmlContent(release.content);
+
+  if (cleaned) {
+    return cleaned.slice(0, 155);
+  }
+
+  return `${release.name} releases ${formatReleaseDate(release)} for $${release.price}${
+    release.sku ? ` with style code ${release.sku}` : ""
+  }.`;
 }

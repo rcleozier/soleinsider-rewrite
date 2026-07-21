@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
 type LiveCountdownProps = {
   releaseDateCalendar: string;
@@ -41,9 +42,12 @@ export function LiveCountdown({
           ))}
         </div>
       ) : (
-        <strong className="countdown-state">Release date TBA</strong>
+        <strong className="countdown-state">Date TBA — get notified</strong>
       )}
       {isElapsed ? <span className="countdown-state">Drop is live or elapsed</span> : null}
+      <Link className="countdown-reminder-link" href="/download">
+        Get a release reminder
+      </Link>
     </section>
   );
 }
