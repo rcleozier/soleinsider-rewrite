@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Inter } from "next/font/google";
+import { SessionProviderWrapper } from "@/components/SessionProviderWrapper";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import "./globals.css";
@@ -47,9 +48,11 @@ export default function RootLayout({
       className={`${displayFont.variable} ${bodyFont.variable}`}
     >
       <body>
-        <SiteHeader />
-        {children}
-        <SiteFooter />
+        <SessionProviderWrapper>
+          <SiteHeader />
+          {children}
+          <SiteFooter />
+        </SessionProviderWrapper>
       </body>
     </html>
   );

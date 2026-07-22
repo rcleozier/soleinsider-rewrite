@@ -4153,6 +4153,7 @@ h2,
 .editorial-home > .app-cta-band,
 .editorial-home > .app-linkback,
 .editorial-home > .login-panel,
+.editorial-home > .profile-section,
 .editorial-home > .legal-body {
   width: min(1180px, calc(100% - 40px));
   margin: 0 auto;
@@ -6547,6 +6548,60 @@ a.score-card:hover {
 /* Most-voted lead badge on the homepage. */
 .ed-cat--voted {
   color: var(--color-accent);
+}
+
+/* ==========================================================================
+   Profile
+   ========================================================================== */
+
+.profile-signout {
+  margin-top: 18px;
+  padding: 10px 18px;
+  border: 1px solid rgba(16, 17, 20, 0.18);
+  border-radius: 999px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.profile-section {
+  padding: 24px 0 48px;
+}
+
+.profile-section h2 {
+  margin: 0 0 18px;
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.profile-empty {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.profile-comments {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.profile-comments li {
+  padding: 16px 18px;
+  border: 1px solid rgba(16, 17, 20, 0.1);
+  border-radius: 12px;
+  background: var(--surface-soft);
+}
+
+.profile-comments p {
+  margin: 0;
+}
+
+.profile-comments__meta {
+  margin-top: 8px !important;
+  color: var(--muted);
+  font-size: 0.78rem;
 }
 
 /* ==========================================================================

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { navigation, siteName } from "@/lib/siteData";
@@ -8,6 +9,9 @@ import { navigation, siteName } from "@/lib/siteData";
 export function SiteHeader() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { data: session } = useSession();
+  const accountHref = session ? "/profile" : "/login";
+  const accountLabel = session ? "Profile" : "Log in";
 
   return (
     <header className="nav" data-open={isMenuOpen ? "true" : "false"}>
@@ -48,10 +52,10 @@ export function SiteHeader() {
           {/* The pill is hidden on small screens, so the drawer carries it. */}
           <Link
             className="nav__links-login"
-            href="/login"
+            href={accountHref}
             onClick={() => setIsMenuOpen(false)}
           >
-            Log in
+            {accountLabel}
           </Link>
         </nav>
 
@@ -62,8 +66,8 @@ export function SiteHeader() {
           <Link className="nav__cta" href="/app">
             Get the app
           </Link>
-          <Link className="nav__login" href="/login">
-            Log in
+          <Link className="nav__login" href={accountHref}>
+            {accountLabel}
           </Link>
         </div>
       </div>

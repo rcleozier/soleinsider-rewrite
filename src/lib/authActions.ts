@@ -4,12 +4,16 @@ import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/memberPassword";
-import { signIn } from "@/lib/auth";
+import { signIn, signOut } from "@/lib/auth";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function signInWithGoogle() {
   await signIn("google", { redirectTo: "/" });
+}
+
+export async function signOutAction() {
+  await signOut({ redirectTo: "/" });
 }
 
 export async function loginWithCredentials(formData: FormData) {
