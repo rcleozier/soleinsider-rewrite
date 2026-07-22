@@ -2,11 +2,34 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProductImageUrl } from "@/lib/productImages";
 
-export async function getTempReleases(limit = 80) {
+export type TempReleaseStatusFilter = "all" | "pending" | "approved";
+
+export async function getTempReleases(
+  { status = "all", limit = 80 }: { status?: TempReleaseStatusFilter; limit?: number } = {},
+) {
   return prisma.tempProduct.findMany({
+    where: status === "all" ? undefined : { status: statusToDbValue(status) },
     orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     take: limit,
   });
+}
+
+export async function getTempReleaseCounts() {
+  const [total, approved] = await Promise.all([
+    prisma.tempProduct.count(),
+    prisma.tempProduct.count({ where: { status: "approved" } }),
+  ]);
+
+  return { total, approved, pending: total - approved };
+}
+
+function statusToDbValue(status: TempReleaseStatusFilter) {
+  if (status === "approved") {
+    return "approved";
+  }
+
+  // Legacy rows default to "new"; anything that isn't "approved" is pending.
+  return { not: "approved" };
 }
 
 export async function getTempRelease(id: number) {

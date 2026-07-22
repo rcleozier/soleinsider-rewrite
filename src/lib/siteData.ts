@@ -24,6 +24,7 @@ export const navigation = [
   { href: "/", label: "Release Dates" },
   { href: "/articles", label: "Stories" },
   { href: "/calendar", label: "Calendar" },
+  { href: "/brands", label: "Brands" },
   { href: "/sports", label: "Sports" },
   { href: "/on-this-day", label: "On This Day" },
 ];

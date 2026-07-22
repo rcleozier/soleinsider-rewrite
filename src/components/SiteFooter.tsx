@@ -49,6 +49,7 @@ export function SiteFooter() {
               {brand.label}
             </Link>
           ))}
+          <Link href="/brands">All Brands</Link>
         </nav>
 
         <nav className="footer__col" aria-label="Categories">

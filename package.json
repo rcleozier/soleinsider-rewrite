@@ -23,6 +23,7 @@
     "crawl:kicksonfire": "node scripts/run-crawler.mjs kicksonfire"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1092.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "@sparticuz/chromium": "^149.0.0",
