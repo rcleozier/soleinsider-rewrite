@@ -40,60 +40,64 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           </Link>
         </div>
 
-        <form className="login-form" action={signUpWithCredentials}>
-          <fieldset>
-            <legend className="ed-sr-only">Create an account</legend>
+        <div className="login-form">
+          {error ? (
+            <p className="login-error" role="alert">
+              {error}
+            </p>
+          ) : null}
 
-            {error ? (
-              <p className="login-error" role="alert">
-                {error}
-              </p>
-            ) : null}
-
-            <button className="login-google" formAction={signInWithGoogle}>
+          <form action={signInWithGoogle}>
+            <button className="login-google" type="submit">
               <GoogleMark />
               Continue with Google
             </button>
+          </form>
 
-            <div className="login-divider">
-              <span>or</span>
-            </div>
+          <div className="login-divider">
+            <span>or</span>
+          </div>
 
-            <label htmlFor="signup-name">Name</label>
-            <input autoComplete="name" id="signup-name" name="name" placeholder="Jordan Smith" required type="text" />
+          <form action={signUpWithCredentials}>
+            <fieldset>
+              <legend className="ed-sr-only">Create an account</legend>
 
-            <label htmlFor="signup-email">Email</label>
-            <input
-              autoComplete="email"
-              id="signup-email"
-              name="email"
-              placeholder="you@example.com"
-              required
-              type="email"
-            />
+              <label htmlFor="signup-name">Name</label>
+              <input autoComplete="name" id="signup-name" name="name" placeholder="Jordan Smith" required type="text" />
 
-            <label htmlFor="signup-password">Password</label>
-            <input
-              autoComplete="new-password"
-              id="signup-password"
-              minLength={8}
-              name="password"
-              placeholder="At least 8 characters"
-              required
-              type="password"
-            />
+              <label htmlFor="signup-email">Email</label>
+              <input
+                autoComplete="email"
+                id="signup-email"
+                name="email"
+                placeholder="you@example.com"
+                required
+                type="email"
+              />
 
-            <button className="login-submit" type="submit">
-              Create account
-            </button>
-          </fieldset>
+              <label htmlFor="signup-password">Password</label>
+              <input
+                autoComplete="new-password"
+                id="signup-password"
+                minLength={8}
+                name="password"
+                placeholder="At least 8 characters"
+                required
+                type="password"
+              />
+
+              <button className="login-submit" type="submit">
+                Create account
+              </button>
+            </fieldset>
+          </form>
 
           <p className="login-foot">
             By creating an account you agree to our{" "}
             <Link href="/terms">Terms</Link> and{" "}
             <Link href="/privacy">Privacy Policy</Link>.
           </p>
-        </form>
+        </div>
       </section>
     </main>
   );

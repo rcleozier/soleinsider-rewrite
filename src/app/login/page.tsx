@@ -41,56 +41,60 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </Link>
         </div>
 
-        <form className="login-form" action={loginWithCredentials}>
-          <fieldset>
-            <legend className="ed-sr-only">Sign in</legend>
+        <div className="login-form">
+          {error ? (
+            <p className="login-error" role="alert">
+              {error}
+            </p>
+          ) : null}
 
-            {error ? (
-              <p className="login-error" role="alert">
-                {error}
-              </p>
-            ) : null}
-
-            <button className="login-google" formAction={signInWithGoogle}>
+          <form action={signInWithGoogle}>
+            <button className="login-google" type="submit">
               <GoogleMark />
               Continue with Google
             </button>
+          </form>
 
-            <div className="login-divider">
-              <span>or</span>
-            </div>
+          <div className="login-divider">
+            <span>or</span>
+          </div>
 
-            <label htmlFor="login-email">Email</label>
-            <input
-              autoComplete="email"
-              id="login-email"
-              name="email"
-              placeholder="you@example.com"
-              required
-              type="email"
-            />
+          <form action={loginWithCredentials}>
+            <fieldset>
+              <legend className="ed-sr-only">Sign in</legend>
 
-            <label htmlFor="login-password">Password</label>
-            <input
-              autoComplete="current-password"
-              id="login-password"
-              name="password"
-              placeholder="••••••••"
-              required
-              type="password"
-            />
+              <label htmlFor="login-email">Email</label>
+              <input
+                autoComplete="email"
+                id="login-email"
+                name="email"
+                placeholder="you@example.com"
+                required
+                type="email"
+              />
 
-            <button className="login-submit" type="submit">
-              Log in
-            </button>
-          </fieldset>
+              <label htmlFor="login-password">Password</label>
+              <input
+                autoComplete="current-password"
+                id="login-password"
+                name="password"
+                placeholder="••••••••"
+                required
+                type="password"
+              />
+
+              <button className="login-submit" type="submit">
+                Log in
+              </button>
+            </fieldset>
+          </form>
 
           <p className="login-foot">
             New here? <Link href="/signup">Create an account</Link>. By using
             SoleInsider you agree to our <Link href="/terms">Terms</Link> and{" "}
             <Link href="/privacy">Privacy Policy</Link>.
           </p>
-        </form>
+        </div>
       </section>
     </main>
   );

@@ -6626,6 +6626,7 @@ a.score-card:hover {
 
 .login-google {
   display: inline-flex;
+  width: 100%;
   gap: 10px;
   align-items: center;
   justify-content: center;
