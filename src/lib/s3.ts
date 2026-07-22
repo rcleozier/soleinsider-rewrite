@@ -1,5 +1,4 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import sharp from "sharp";
 
 // Configure these once the bucket exists:
 //   AWS_REGION               e.g. "us-east-1"
@@ -95,6 +94,8 @@ export async function uploadProductImageToS3(file: File, keyPrefix: string) {
       file.type || "application/octet-stream",
     );
   }
+
+  const { default: sharp } = await import("sharp");
 
   const optimized = await sharp(originalBytes)
     .rotate() // honour EXIF orientation before stripping metadata

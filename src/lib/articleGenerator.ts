@@ -1,15 +1,11 @@
-import sharp from "sharp";
 import { prisma } from "@/lib/prisma";
 import { getAllTopics, type ArticleCategory, type ArticleTopic } from "@/lib/articleTopics";
 import { generateArticleCopy, generateArticleCoverImage, isOpenAiConfigured } from "@/lib/openaiClient";
 import { isS3Configured, uploadBufferToS3 } from "@/lib/s3";
 
-// gpt-image-1 returns a 1024x1024 PNG. Covers render at up to the ~1180px
-// content column, so these are sized at 2x for retina and re-encoded as WebP.
-// Still a large reduction versus the raw PNG, but with enough headroom that
-// the hero image stays sharp on a high-DPI display.
-// Matches the native 1536x1024 source cropped to 16:9, so the cover is never
-// upscaled — 2x the ~1180px content column, i.e. retina-sharp.
+// Matches the native 1536x1024 gpt-image-1 source cropped to 16:9, so the
+// cover is never upscaled — 2x the ~1180px content column, i.e. retina-sharp,
+// while still far smaller than the raw PNG once re-encoded as WebP.
 const COVER_WIDTH = 1536;
 const COVER_HEIGHT = 864;
 const COVER_QUALITY = 90;
@@ -96,6 +92,8 @@ async function generateOneArticle(topic: ArticleTopic): Promise<GeneratedArticle
 
   // Crop to a 16:9 editorial banner and re-encode. `cover` fit keeps the
   // subject centred rather than letterboxing the square source.
+  const { default: sharp } = await import("sharp");
+
   const optimizedImage = await sharp(rawImage)
     .resize(COVER_WIDTH, COVER_HEIGHT, { fit: "cover", position: "attention" })
     .webp({ quality: COVER_QUALITY })

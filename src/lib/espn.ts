@@ -103,6 +103,16 @@ export function getEspnLeague(slug: string | undefined) {
   return espnLeagues.find((league) => league.slug === slug) ?? espnLeagues[0];
 }
 
+/**
+ * Strict lookup — returns undefined instead of falling back to the first
+ * league. The web pages want the lenient version (an unknown ?league= just
+ * shows the NBA board), but the API must 404 rather than silently return
+ * data for a league the caller didn't ask for.
+ */
+export function findEspnLeague(slug: string | undefined) {
+  return espnLeagues.find((league) => league.slug === slug);
+}
+
 type ScoreboardResponse = {
   events?: Array<{
     id?: string;

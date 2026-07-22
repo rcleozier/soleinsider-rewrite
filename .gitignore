@@ -54,3 +54,8 @@ Thumbs.db
 
 # TypeScript
 *.tsbuildinfo
+
+
+# Single lockfile: npm. A macOS-generated yarn.lock omits platform-specific
+# optional deps (sharp's linux-x64 binaries), which breaks the Vercel build.
+yarn.lock
