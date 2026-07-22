@@ -8,13 +8,14 @@ import OpenAI from "openai";
 //                         image on paper, but most newer OpenAI projects
 //                         don't have them enabled at all (confirmed: this
 //                         project's key gets "model does not exist" for
-//                         dall-e-2). gpt-image-1 at "low" quality is the
-//                         reliable cheap option instead.
-//   OPENAI_IMAGE_SIZE     default "1024x1024" (gpt-image-1 doesn't offer
-//                         anything smaller — 1024x1536/1536x1024/auto are
-//                         the only other valid values)
-//   OPENAI_IMAGE_QUALITY  default "low" — gpt-image-1 only; ignored by
-//                         dall-e-2/3 if you switch OPENAI_IMAGE_MODEL back
+//                         dall-e-2).
+//   OPENAI_IMAGE_SIZE     default "1536x1024" — the landscape option. Covers
+//                         crop to 16:9, so a landscape source loses far less
+//                         than the 1024x1024 square. Valid gpt-image-1 values
+//                         are 1024x1024, 1024x1536, 1536x1024, auto.
+//   OPENAI_IMAGE_QUALITY  default "medium" — "low" produced visibly soft,
+//                         mushy covers. Valid: low, medium, high, auto.
+//                         gpt-image-1 only; ignored by dall-e-2/3.
 
 export function isOpenAiConfigured() {
   return Boolean(process.env.OPENAI_API_KEY);
@@ -63,12 +64,19 @@ export async function generateArticleCopy(brief: string): Promise<GeneratedArtic
           "fabricated statistics presented as fact, no claims about events after your knowledge " +
           "cutoff stated as certain. When a detail might be time-sensitive, phrase it generally. " +
           "Return strict JSON with this shape: " +
-          '{"title": string, "deck": string (one-sentence hook, under 160 chars), ' +
+          '{"title": string, "deck": string (one-sentence hook, under 160 chars, written fresh — ' +
+          "NOT copied from the opening paragraph), " +
           '"keywords": string[] (3-6 lowercase tags), ' +
           '"contentHtml": string (600-900 words as HTML using ONLY these tags: ' +
-          "<p> <h2> <h3> <strong> <em> <ul> <li> <a href=\"...\">, 4-7 paragraphs, at least one <h2>), " +
-          '"imagePrompt": string (a vivid, concrete visual description for a magazine-cover ' +
-          "illustration — no text/words/logos in the image, no real photographs of named people)}",
+          "<p> <h2> <h3> <strong> <em> <ul> <li> <a href=\"...\">, 4-7 paragraphs, at least one <h2>. " +
+          "START with a body <p> lede — never an <h2>. Do NOT use generic section headings like " +
+          '"Introduction", "Overview", or "Conclusion"; write specific, descriptive headings instead), ' +
+          '"imagePrompt": string (a photorealistic editorial PHOTOGRAPH description for the cover — ' +
+          "describe it as a real photo: camera framing, lighting, surface, depth of field. " +
+          "Prefer detailed product/still-life or atmospheric scene photography. " +
+          "No text, words, or brand logos in the image. No recognizable real people — if a person " +
+          "appears, describe them generically and crop so the face is not the subject. " +
+          'Do not request illustration, painting, drawing, 3D render, or CGI styles)}',
       },
       { role: "user", content: brief },
     ],
@@ -96,20 +104,39 @@ export async function generateArticleCopy(brief: string): Promise<GeneratedArtic
 }
 
 /** Generates a cover image and returns raw PNG bytes. */
-export async function generateArticleCoverImage(prompt: string): Promise<Uint8Array> {
-  const model = process.env.OPENAI_IMAGE_MODEL || "dall-e-2";
-  const size = (process.env.OPENAI_IMAGE_SIZE || "512x512") as
-    | "256x256"
-    | "512x512"
-    | "1024x1024";
+export async function generateArticleCoverImage(promptInput: string): Promise<Uint8Array> {
+  const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
+  const isGptImage = model.startsWith("gpt-image");
 
-  const response = await getClient().images.generate({
-    model,
-    prompt,
-    size,
-    n: 1,
-    response_format: "b64_json",
-  });
+  // Restated here as well as in the copy prompt: without an explicit
+  // photography instruction these models drift toward painterly illustration.
+  const prompt =
+    `${promptInput}\n\n` +
+    "Style: photorealistic editorial photography, shot on a full-frame DSLR with a prime lens. " +
+    "Natural realistic lighting, true-to-life colour, fine surface texture and material detail, " +
+    "shallow depth of field. It must look like a real photograph, not an illustration, " +
+    "painting, sketch, 3D render, or CGI. No text, watermarks, or brand logos anywhere in frame.";
+
+  // gpt-image-1 and dall-e-* take different parameters: gpt-image-1 always
+  // returns b64 and rejects `response_format` outright, while dall-e-* needs
+  // it to avoid getting back a short-lived URL instead of bytes.
+  const response = await getClient().images.generate(
+    isGptImage
+      ? {
+          model,
+          prompt,
+          size: (process.env.OPENAI_IMAGE_SIZE || "1536x1024") as "1536x1024",
+          quality: (process.env.OPENAI_IMAGE_QUALITY || "medium") as "medium",
+          n: 1,
+        }
+      : {
+          model,
+          prompt,
+          size: (process.env.OPENAI_IMAGE_SIZE || "512x512") as "512x512",
+          response_format: "b64_json",
+          n: 1,
+        },
+  );
 
   const b64 = response.data?.[0]?.b64_json;
 

@@ -1,4 +1,5 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import sharp from "sharp";
 
 // Configure these once the bucket exists:
 //   AWS_REGION               e.g. "us-east-1"
@@ -71,13 +72,41 @@ export async function uploadBufferToS3(
   return `https://${getPublicHostname()}/${key}`;
 }
 
-/** Uploads a single product image file under `products/`. */
-export async function uploadProductImageToS3(file: File, keyPrefix: string) {
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  const extension = getExtension(file.name, file.type);
-  const key = `products/${keyPrefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${extension}`;
+// Product shots never render wider than the detail-page carousel. Admin
+// uploads come straight off a phone or a brand's press kit and are routinely
+// 5-15MB, so they're downscaled and re-encoded before they ever reach S3.
+const PRODUCT_MAX_WIDTH = 1400;
+const PRODUCT_QUALITY = 82;
 
-  return uploadBufferToS3(bytes, key, file.type || "application/octet-stream");
+/**
+ * Uploads a single product image under `products/`, resized to a sane max
+ * width and re-encoded as WebP. Non-raster uploads (e.g. SVG) are passed
+ * through untouched, since sharp would rasterize them.
+ */
+export async function uploadProductImageToS3(file: File, keyPrefix: string) {
+  const originalBytes = new Uint8Array(await file.arrayBuffer());
+  const stem = `products/${keyPrefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+  if (!isResizableImage(file.type)) {
+    const extension = getExtension(file.name, file.type);
+    return uploadBufferToS3(
+      originalBytes,
+      `${stem}${extension}`,
+      file.type || "application/octet-stream",
+    );
+  }
+
+  const optimized = await sharp(originalBytes)
+    .rotate() // honour EXIF orientation before stripping metadata
+    .resize({ width: PRODUCT_MAX_WIDTH, withoutEnlargement: true })
+    .webp({ quality: PRODUCT_QUALITY })
+    .toBuffer();
+
+  return uploadBufferToS3(optimized, `${stem}.webp`, "image/webp");
+}
+
+function isResizableImage(mimeType: string) {
+  return /^image\/(jpeg|jpg|png|webp|avif|tiff|gif)$/i.test(mimeType);
 }
 
 function getExtension(filename: string, mimeType: string) {

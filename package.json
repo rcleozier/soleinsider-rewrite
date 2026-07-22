@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "articles:generate": "tsx scripts/generateArticles.mts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
@@ -37,7 +38,8 @@
     "prisma": "^7.8.0",
     "puppeteer": "^25.3.0",
     "react": "19.2.7",
-    "react-dom": "19.2.7"
+    "react-dom": "19.2.7",
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
     "@types/node": "26.0.0",

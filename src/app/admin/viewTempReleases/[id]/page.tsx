@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getProductImageUrl } from "@/lib/productImages";
 import {
   approveTempRelease,
   formatTempDate,
@@ -32,7 +33,7 @@ export default async function TempReleaseDetailPage({ params }: TempReleasePageP
 
   const isApproved = release.status === "approved";
   const primaryImage =
-    release.image || images[0]?.image || "https://soleinsider.com/public/products/default.png";
+    getProductImageUrl(release.image || images[0]?.image);
 
   return (
     <main className="admin-shell">

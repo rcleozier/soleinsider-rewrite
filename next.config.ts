@@ -1,13 +1,21 @@
 import type { NextConfig } from "next";
 
-// Newly uploaded product images resolve to this host (see src/lib/s3.ts) —
-// either the bucket's own S3 endpoint or a CloudFront/custom domain in front
-// of it, depending on whether S3_PUBLIC_HOSTNAME is set.
-const s3PublicHostname =
+// All product imagery now resolves to S3 (see src/lib/productImages.ts), so
+// this allowlist is load-bearing — a build without the env vars set would
+// otherwise break every image on the site. The known bucket host is listed
+// statically as a floor, and the env-derived host is added on top so a
+// CloudFront/custom domain or a bucket rename keeps working.
+const s3StaticHostname = "soleinsider.s3.us-east-1.amazonaws.com";
+
+const s3EnvHostname =
   process.env.S3_PUBLIC_HOSTNAME ||
   (process.env.S3_BUCKET_NAME && process.env.AWS_REGION
     ? `${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com`
     : undefined);
+
+const s3Hostnames = Array.from(
+  new Set([s3StaticHostname, ...(s3EnvHostname ? [s3EnvHostname] : [])]),
+);
 
 const nextConfig: NextConfig = {
   devIndicators: false,
@@ -23,9 +31,7 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "soleinsider.com",
       },
-      ...(s3PublicHostname
-        ? [{ protocol: "https" as const, hostname: s3PublicHostname }]
-        : []),
+      ...s3Hostnames.map((hostname) => ({ protocol: "https" as const, hostname })),
       {
         protocol: "https",
         hostname: "i.imgur.com",

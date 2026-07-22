@@ -7097,3 +7097,143 @@ a.score-card:hover {
     gap: 18px;
   }
 }
+
+/* ==========================================================================
+   Article detail (editorial)
+   ========================================================================== */
+
+.article-page > article > .ed-masthead,
+.article-page__cover,
+.article-page__prose,
+.article-page__foot {
+  width: min(1180px, calc(100% - 40px));
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.article-page__head {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* The shared masthead h1 scales for one- or two-word page titles; article
+   headlines are full sentences and need a smaller, tighter setting. */
+.article-page__head h1 {
+  max-width: 20ch;
+  padding-bottom: 0;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 1.03;
+}
+
+.article-page__head .ed-cat {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.article-page__head .ed-cat a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.article-page__head .ed-cat span {
+  color: rgba(16, 17, 20, 0.3);
+}
+
+.article-page__head .ed-deck {
+  max-width: 62ch;
+  margin-top: 14px;
+  font-size: 1.05rem;
+}
+
+.article-page__head .ed-byline {
+  margin-top: 16px;
+  padding-bottom: 26px;
+  border-bottom: 2px solid var(--color-text);
+}
+
+.article-page__cover {
+  margin: 0 auto 40px;
+}
+
+.article-page__cover img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: var(--surface-soft);
+}
+
+/* Prose sits in a narrower measure than the cover for readability. */
+.article-page__prose {
+  max-width: 68ch;
+}
+
+.article-page__prose p {
+  margin: 0 0 22px;
+  color: #2d3035;
+  font-family: var(--font-sans);
+  font-size: 1.12rem;
+  line-height: 1.72;
+}
+
+.article-page__prose h2,
+.article-page__prose h3 {
+  margin: 40px 0 14px;
+  color: var(--color-text);
+  font-family: var(--font-serif);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.article-page__prose h2 {
+  font-size: clamp(1.4rem, 2.4vw, 1.9rem);
+}
+
+.article-page__prose h3 {
+  font-size: clamp(1.15rem, 1.8vw, 1.4rem);
+}
+
+.article-page__prose ul,
+.article-page__prose ol {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 26px;
+  padding-left: 1.3rem;
+  color: #2d3035;
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.article-page__prose li strong {
+  color: var(--color-text);
+}
+
+.article-page__prose a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.article-page__prose img {
+  width: 100%;
+  height: auto;
+  margin: 26px 0;
+}
+
+.article-page__foot {
+  max-width: 68ch;
+  margin-top: 44px;
+  padding-top: 26px;
+  border-top: 1px solid rgba(16, 17, 20, 0.12);
+  padding-bottom: 60px;
+}
+
+@media (max-width: 640px) {
+  .article-page__prose p {
+    font-size: 1.05rem;
+  }
+}

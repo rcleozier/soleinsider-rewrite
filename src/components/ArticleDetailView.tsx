@@ -1,43 +1,57 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { ArticleRecord } from "@/lib/dbArticles";
 
 export function ArticleDetailView({ article }: { article: ArticleRecord }) {
+  const publishedDate = new Date(`${article.date}T12:00:00`);
+  const formattedDate = Number.isNaN(publishedDate.getTime())
+    ? null
+    : new Intl.DateTimeFormat("en", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      }).format(publishedDate);
+
   return (
-    <main>
-      <article className="article-detail">
-        <header>
-          <Link href="/articles" className="text-link">
-            Stories
-          </Link>
-          <p className="kicker">{article.category}</p>
+    <main className="editorial-home article-page">
+      <article>
+        <header className="ed-masthead article-page__head">
+          <p className="ed-cat">
+            <Link href="/articles">← Stories</Link>
+            <span aria-hidden="true">·</span>
+            {article.category}
+          </p>
           <h1>{article.title}</h1>
-          <p>{article.deck}</p>
-          <div className="article-byline">
-            <span>By {article.author}</span>
-            <time dateTime={article.date}>
-              {new Intl.DateTimeFormat("en", {
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              }).format(new Date(`${article.date}T12:00:00`))}
-            </time>
-          </div>
+          {article.deck ? <p className="ed-deck">{article.deck}</p> : null}
+          <p className="ed-byline">
+            By {article.author}
+            {formattedDate ? (
+              <>
+                {" · "}
+                <time dateTime={article.date}>{formattedDate}</time>
+              </>
+            ) : null}
+          </p>
         </header>
+
         {article.image ? (
-          <Image
-            src={article.image}
-            alt=""
-            width={1180}
-            height={560}
-            priority
-            loading="eager"
-          />
+          <figure className="article-page__cover">
+            {/* Legacy article covers point at arbitrary historical CDN hosts,
+                so these stay outside next/image optimization. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={article.image} alt="" loading="eager" />
+          </figure>
         ) : null}
+
         <div
-          className="article-prose"
+          className="article-page__prose"
           dangerouslySetInnerHTML={{ __html: article.html }}
         />
+
+        <footer className="article-page__foot">
+          <Link className="ed-more" href="/articles">
+            More stories
+          </Link>
+        </footer>
       </article>
     </main>
   );

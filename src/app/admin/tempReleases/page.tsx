@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { getProductImageUrl } from "@/lib/productImages";
 import {
   formatTempDate,
   formatTempPrice,
@@ -69,7 +70,7 @@ export default async function TempReleasesPage({ searchParams }: TempReleasesPag
             <article className="admin-temp-card" key={release.id}>
               <div className="admin-temp-card__media">
                 <Image
-                  src={release.image || "https://soleinsider.com/public/products/default.png"}
+                  src={getProductImageUrl(release.image)}
                   alt=""
                   fill
                   sizes="(max-width: 800px) 100vw, 33vw"

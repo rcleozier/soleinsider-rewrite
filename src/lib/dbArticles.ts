@@ -114,7 +114,28 @@ function toDeck(text: string, title: string) {
   const withoutTitle = text.replace(title, "").trim();
   const source = withoutTitle || text || title;
 
-  return source.length > 180 ? `${source.slice(0, 177).trim()}...` : source;
+  if (source.length <= 180) {
+    return source;
+  }
+
+  // Prefer ending on a complete sentence; otherwise cut at the last whole
+  // word. Slicing at a fixed offset used to strand fragments like
+  // "high-qualit..." on every article card.
+  const window = source.slice(0, 180);
+  const lastSentenceEnd = Math.max(
+    window.lastIndexOf(". "),
+    window.lastIndexOf("! "),
+    window.lastIndexOf("? "),
+  );
+
+  if (lastSentenceEnd > 90) {
+    return window.slice(0, lastSentenceEnd + 1).trim();
+  }
+
+  const lastSpace = window.lastIndexOf(" ");
+  const trimmed = (lastSpace > 0 ? window.slice(0, lastSpace) : window).trim();
+
+  return `${trimmed.replace(/[,;:.\-–—]+$/, "")}...`;
 }
 
 function splitParagraphs(text: string) {
