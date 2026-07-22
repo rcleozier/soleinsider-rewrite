@@ -47,12 +47,13 @@ export default async function BrandPage({ params }: BrandPageProps) {
   }
 
   const releases = await getDbReleasesByPatterns(brand.patterns, 200);
+  const stats = getBrandStats(releases);
 
   return (
-    <main className="editorial-home brands-page">
+    <main className="editorial-home brands-page brand-detail">
       <header className="ed-masthead">
         <p className="ed-cat">
-          <Link href="/brands">Brands</Link>
+          <Link href="/brands">← All brands</Link>
         </p>
         <h1>{brand.label}</h1>
         <p className="ed-deck">
@@ -60,15 +61,35 @@ export default async function BrandPage({ params }: BrandPageProps) {
         </p>
       </header>
 
-      <section className="search-panel">
-        <p className="search-count">
-          {releases.length
-            ? `${releases.length}${releases.length === 200 ? "+" : ""} ${
-                releases.length === 1 ? "release" : "releases"
-              }`
-            : "No releases on file yet"}
-        </p>
-      </section>
+      {releases.length ? (
+        <section className="brand-stats" aria-label="Archive summary">
+          <div>
+            <strong>
+              {releases.length}
+              {releases.length === 200 ? "+" : ""}
+            </strong>
+            <span>{releases.length === 1 ? "Release" : "Releases"}</span>
+          </div>
+          {stats.latestYear ? (
+            <div>
+              <strong>{stats.latestYear}</strong>
+              <span>Most recent</span>
+            </div>
+          ) : null}
+          {stats.priceRange ? (
+            <div>
+              <strong>{stats.priceRange}</strong>
+              <span>Retail range</span>
+            </div>
+          ) : null}
+          {stats.topType ? (
+            <div>
+              <strong>{stats.topType}</strong>
+              <span>Mostly</span>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
 
       <div className="cal-list">
         {releases.length ? (
@@ -111,6 +132,42 @@ export default async function BrandPage({ params }: BrandPageProps) {
       </div>
     </main>
   );
+}
+
+function getBrandStats(releases: { type: string; price: string; release_date: string }[]) {
+  if (!releases.length) {
+    return { latestYear: null, priceRange: null, topType: null };
+  }
+
+  const years = releases
+    .map((release) => release.release_date.match(/\b(20\d{2}|19\d{2})\b/)?.[1])
+    .filter((year): year is string => Boolean(year))
+    .map(Number);
+
+  const prices = releases
+    .map((release) => Number(release.price))
+    .filter((price) => Number.isFinite(price) && price > 0);
+
+  const typeCounts = new Map<string, number>();
+  for (const release of releases) {
+    const type = formatProductType(release.type);
+    typeCounts.set(type, (typeCounts.get(type) ?? 0) + 1);
+  }
+  const topType = Array.from(typeCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+
+  const minPrice = prices.length ? Math.min(...prices) : null;
+  const maxPrice = prices.length ? Math.max(...prices) : null;
+
+  return {
+    latestYear: years.length ? String(Math.max(...years)) : null,
+    priceRange:
+      minPrice !== null && maxPrice !== null
+        ? minPrice === maxPrice
+          ? `$${minPrice}`
+          : `$${minPrice}–$${maxPrice}`
+        : null,
+    topType,
+  };
 }
 
 function formatProductType(type: string) {

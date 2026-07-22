@@ -38,21 +38,21 @@ function getPublicHostname() {
 }
 
 /**
- * Uploads a single image file to S3 under `products/` and returns its public
- * URL. Throws if S3 isn't configured yet — callers should check
- * `isS3Configured()` first and surface a friendly message instead of letting
- * this throw reach the user.
+ * Uploads raw bytes to S3 under the given key and returns the public URL.
+ * Throws if S3 isn't configured — callers should check `isS3Configured()`
+ * first and surface a friendly message instead of letting this throw reach
+ * the user.
  */
-export async function uploadProductImageToS3(file: File, keyPrefix: string) {
+export async function uploadBufferToS3(
+  bytes: Uint8Array,
+  key: string,
+  contentType: string,
+) {
   if (!isS3Configured()) {
     throw new Error(
       "S3 is not configured. Set AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and S3_BUCKET_NAME.",
     );
   }
-
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  const extension = getExtension(file.name, file.type);
-  const key = `products/${keyPrefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${extension}`;
 
   const client = getS3Client();
 
@@ -61,7 +61,7 @@ export async function uploadProductImageToS3(file: File, keyPrefix: string) {
       Bucket: process.env.S3_BUCKET_NAME,
       Key: key,
       Body: bytes,
-      ContentType: file.type || "application/octet-stream",
+      ContentType: contentType || "application/octet-stream",
       // No ACL is set: modern buckets with "Bucket owner enforced" object
       // ownership reject ACLs outright. Public read is expected to come from
       // the bucket policy instead.
@@ -69,6 +69,15 @@ export async function uploadProductImageToS3(file: File, keyPrefix: string) {
   );
 
   return `https://${getPublicHostname()}/${key}`;
+}
+
+/** Uploads a single product image file under `products/`. */
+export async function uploadProductImageToS3(file: File, keyPrefix: string) {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const extension = getExtension(file.name, file.type);
+  const key = `products/${keyPrefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${extension}`;
+
+  return uploadBufferToS3(bytes, key, file.type || "application/octet-stream");
 }
 
 function getExtension(filename: string, mimeType: string) {

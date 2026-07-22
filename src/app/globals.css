@@ -4130,10 +4130,30 @@ h2,
   background: #fff;
 }
 
+/* Every top-level block inside an editorial page shell shares one gutter.
+   Listed here rather than repeated per page class — a new page that reuses
+   .cal-list or .search-panel would otherwise render full-bleed until someone
+   remembered to add another copy of this rule. */
 .editorial-home > .ed-mosaic,
 .editorial-home > .ed-strip,
 .editorial-home > .ed-body,
-.editorial-home > .homepage-seo-block {
+.editorial-home > .homepage-seo-block,
+.editorial-home > .cal-list,
+.editorial-home > .cal-jump,
+.editorial-home > .search-panel,
+.editorial-home > .otd-controls,
+.editorial-home > .brand-jump,
+.editorial-home > .brand-groups,
+.editorial-home > .sports-leagues,
+.editorial-home > .game-hero,
+.editorial-home > .app-store-row,
+.editorial-home > .app-stats,
+.editorial-home > .app-features,
+.editorial-home > .app-steps,
+.editorial-home > .app-cta-band,
+.editorial-home > .app-linkback,
+.editorial-home > .login-panel,
+.editorial-home > .legal-body {
   width: min(1180px, calc(100% - 40px));
   margin: 0 auto;
 }
@@ -7032,5 +7052,48 @@ a.score-card:hover {
 
   .admin-form__grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Brand detail: archive summary strip */
+.editorial-home > .brand-stats {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+  padding: 26px 0;
+  border-bottom: 1px solid rgba(16, 17, 20, 0.12);
+}
+
+.brand-stats div {
+  display: grid;
+  gap: 4px;
+}
+
+.brand-stats strong {
+  font-family: var(--font-serif);
+  font-size: clamp(1.4rem, 2.4vw, 2rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.brand-stats span {
+  color: rgba(16, 17, 20, 0.45);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.brand-detail .cal-rows li:first-child {
+  padding-top: 22px;
+}
+
+@media (max-width: 700px) {
+  .editorial-home > .brand-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
   }
 }
