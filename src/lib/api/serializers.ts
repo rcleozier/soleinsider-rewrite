@@ -1,3 +1,4 @@
+import type { ArticleRecord } from "@/lib/dbArticles";
 import type { LegacyRelease } from "@/lib/legacyMobileApi";
 import { getProductImageUrl } from "@/lib/productImages";
 import {
@@ -6,6 +7,7 @@ import {
   getBrandName,
   getReleaseUrl,
   cleanHtmlContent,
+  siteUrl,
 } from "@/lib/siteData";
 
 export type ApiRelease = {
@@ -96,4 +98,47 @@ function getColorway(name: string) {
   const dashed = name.split(" - ")[1];
 
   return dashed?.trim() || null;
+}
+
+export type ApiArticle = {
+  id: string;
+  slug: string;
+  title: string;
+  deck: string;
+  category: string;
+  author: string;
+  keywords: string[];
+  publishedAt: { iso: string | null; display: string };
+  cover: string | null;
+  /** Plain-text paragraphs — convenient for clients that don't want to parse HTML. */
+  body: string[];
+  /** Sanitized HTML, restricted to a small safe tag set (p, h2, h3, strong, em, ul, li, a, img, br, hr). */
+  contentHtml: string;
+  links: { web: string; api: string };
+};
+
+/** One article shape across list and detail endpoints. */
+export function serializeArticle(article: ArticleRecord): ApiArticle {
+  const iso = /^\d{4}-\d{2}-\d{2}/.test(article.date) ? article.date.slice(0, 10) : null;
+
+  return {
+    id: article.id,
+    slug: article.slug,
+    title: article.title,
+    deck: article.deck,
+    category: article.category,
+    author: article.author,
+    keywords: article.keywords,
+    publishedAt: {
+      iso,
+      display: article.date,
+    },
+    cover: article.image || null,
+    body: article.body,
+    contentHtml: article.html,
+    links: {
+      web: `${siteUrl}${article.legacyUrl}`,
+      api: `/api/v1/articles/${article.slug}`,
+    },
+  };
 }

@@ -31,13 +31,15 @@ export type ArticleRecord = Article & {
   id: string;
   html: string;
   legacyUrl: string;
+  keywords: string[];
 };
 
-export async function getDbArticles(limit = 120) {
+export async function getDbArticles(limit = 120, offset = 0) {
   try {
     const rows = await prisma.article.findMany({
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: limit,
+      skip: offset,
     });
 
     const mapped = rows.map(mapDbArticle).filter((article) => article.slug);
@@ -46,6 +48,15 @@ export async function getDbArticles(limit = 120) {
   } catch (error) {
     console.warn("Unable to read DB articles.", error);
     return [];
+  }
+}
+
+export async function getDbArticleCount() {
+  try {
+    return await prisma.article.count();
+  } catch (error) {
+    console.warn("Unable to count DB articles.", error);
+    return 0;
   }
 }
 
@@ -83,6 +94,10 @@ function mapDbArticle(row: DbArticle): ArticleRecord {
     body: splitParagraphs(cleanedText),
     html: sanitizeArticleHtml(content),
     legacyUrl: `/article/${row.slug?.trim() || row.id}`,
+    keywords: (row.keywords ?? "")
+      .split(",")
+      .map((keyword) => keyword.trim())
+      .filter(Boolean),
   };
 }
 
