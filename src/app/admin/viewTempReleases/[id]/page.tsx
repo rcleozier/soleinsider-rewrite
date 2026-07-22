@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProductImageUrl } from "@/lib/productImages";
+import { cleanHtmlContent } from "@/lib/siteData";
 import {
   approveTempRelease,
   formatTempDate,
@@ -82,7 +83,7 @@ export default async function TempReleaseDetailPage({ params }: TempReleasePageP
 
       <section className="admin-temp-description">
         <h2>Description</h2>
-        <p>{release.content || release.description || "No description provided."}</p>
+        <p>{cleanHtmlContent(release.content || release.description) || "No description provided."}</p>
       </section>
 
       {images.length ? (
@@ -92,7 +93,7 @@ export default async function TempReleaseDetailPage({ params }: TempReleasePageP
             {images.map((image) => (
               <Image
                 key={image.id}
-                src={image.image || primaryImage}
+                src={getProductImageUrl(image.image)}
                 alt=""
                 width={220}
                 height={180}

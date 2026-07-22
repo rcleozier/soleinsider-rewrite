@@ -6592,6 +6592,16 @@ a.score-card:hover {
   border: 0;
 }
 
+.login-error {
+  margin: 0 0 4px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(201, 42, 42, 0.08);
+  color: #c92a2a;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
 .login-form fieldset:disabled {
   opacity: 0.55;
 }

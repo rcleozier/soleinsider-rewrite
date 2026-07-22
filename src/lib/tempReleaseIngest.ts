@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { prisma } from "@/lib/prisma";
+import { isS3Configured, uploadImageUrlToS3 } from "@/lib/s3";
 
 export type TempReleasePayload = {
   title?: unknown;
@@ -31,6 +32,10 @@ export async function saveTempReleaseFromPayload(
   payload: TempReleasePayload,
 ): Promise<TempReleaseIngestResult> {
   const normalized = normalizeTempReleasePayload(payload);
+  const rehostedImages = await rehostImages(normalized.images);
+  normalized.image = rehostedImages[0] || "";
+  normalized.images = rehostedImages;
+
   const existing = await prisma.tempProduct.findFirst({
     where: {
       OR: [
@@ -173,6 +178,39 @@ function normalizeTempReleasePayload(payload: TempReleasePayload) {
     type: clampText(normalizeType(stringify(payload.type)), 30, "sneakers"),
     releaseDate,
   };
+}
+
+/**
+ * Crawled images live on the source site's own CDN and routinely rot or
+ * disappear once that site moves on — every image is re-uploaded to our own
+ * S3 bucket before the temp release is ever stored. An image that fails to
+ * rehost is dropped rather than falling back to the original URL, so nothing
+ * downstream ever hotlinks a third party. Uploads are content-addressed (see
+ * uploadImageUrlToS3), so re-crawling the same picture reuses the existing
+ * S3 object instead of writing a duplicate.
+ */
+async function rehostImages(sourceUrls: string[]) {
+  if (!sourceUrls.length) {
+    return [];
+  }
+
+  if (!isS3Configured()) {
+    console.warn("S3 is not configured; temp release ingest cannot rehost images.");
+    return [];
+  }
+
+  const uploaded = await Promise.all(
+    sourceUrls.map(async (url) => {
+      try {
+        return await uploadImageUrlToS3(url);
+      } catch (error) {
+        console.warn(`Unable to rehost image to S3, dropping it: ${url}`, error);
+        return null;
+      }
+    }),
+  );
+
+  return uploaded.filter((url): url is string => Boolean(url));
 }
 
 function normalizeImages(value: string) {

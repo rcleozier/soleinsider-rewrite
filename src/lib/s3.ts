@@ -1,4 +1,5 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { createHash } from "node:crypto";
+import { HeadObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 // Configure these once the bucket exists:
 //   AWS_REGION               e.g. "us-east-1"
@@ -104,6 +105,84 @@ export async function uploadProductImageToS3(file: File, keyPrefix: string) {
     .toBuffer();
 
   return uploadBufferToS3(optimized, `${stem}.webp`, "image/webp");
+}
+
+async function objectExistsInS3(key: string) {
+  const client = getS3Client();
+
+  try {
+    await client.send(new HeadObjectCommand({ Bucket: process.env.S3_BUCKET_NAME, Key: key }));
+    return true;
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      ("$metadata" in error
+        ? (error as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode === 404
+        : (error as { name?: string }).name === "NotFound")
+    ) {
+      return false;
+    }
+
+    throw error;
+  }
+}
+
+/**
+ * Uploads bytes to S3 keyed by their own content hash — identical bytes
+ * always resolve to the same key, so re-crawling a release (or two crawlers
+ * finding the same picture) reuses the existing object instead of writing a
+ * new one every time. Skips the PUT entirely when the object already exists.
+ */
+async function uploadContentAddressedToS3(bytes: Uint8Array, prefix: string, extension: string, contentType: string) {
+  const digest = createHash("sha256").update(bytes).digest("hex");
+  const key = `${prefix}/${digest}${extension}`;
+
+  if (!(await objectExistsInS3(key))) {
+    await uploadBufferToS3(bytes, key, contentType);
+  }
+
+  return `https://${getPublicHostname()}/${key}`;
+}
+
+/**
+ * Fetches an externally-hosted image (e.g. from a crawled source site) and
+ * re-uploads it to S3 under `products/` — the same prefix live release images
+ * live under, since a crawled release is very likely to get approved into
+ * the real product record and there's no reason to move the file when that
+ * happens. Crawled releases must never hotlink a third-party image — those
+ * URLs routinely rot or get taken down once the source site moves on.
+ * Deduplicated by content hash, so the same picture is never stored twice.
+ */
+export async function uploadImageUrlToS3(sourceUrl: string) {
+  const response = await fetch(sourceUrl);
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch image (${response.status}): ${sourceUrl}`);
+  }
+
+  const contentType = response.headers.get("content-type") || "";
+  const originalBytes = new Uint8Array(await response.arrayBuffer());
+
+  if (!isResizableImage(contentType)) {
+    const extension = getExtension(sourceUrl, contentType);
+    return uploadContentAddressedToS3(
+      originalBytes,
+      "products",
+      extension,
+      contentType || "application/octet-stream",
+    );
+  }
+
+  const { default: sharp } = await import("sharp");
+
+  const optimized = await sharp(originalBytes)
+    .rotate()
+    .resize({ width: PRODUCT_MAX_WIDTH, withoutEnlargement: true })
+    .webp({ quality: PRODUCT_QUALITY })
+    .toBuffer();
+
+  return uploadContentAddressedToS3(optimized, "products", ".webp", "image/webp");
 }
 
 function isResizableImage(mimeType: string) {

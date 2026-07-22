@@ -123,6 +123,38 @@ const imports = [
       createdAt: dateOrNull(row.created_at),
     }),
   },
+  {
+    table: "temp_products",
+    file: "temp_products.sql",
+    model: prisma.tempProduct,
+    map: (row) => ({
+      id: int(row.id),
+      name: row.name,
+      sku: row.sku,
+      image: row.image,
+      link: row.link,
+      description: row.description,
+      content: row.content,
+      slug: row.slug,
+      hash: row.hash,
+      price: decimalString(row.price),
+      status: row.status,
+      type: row.type,
+      releaseDate: dateOrNull(row.release_date),
+      createdAt: requiredDate(row.created_at),
+      updatedAt: requiredDate(row.updated_at),
+    }),
+  },
+  {
+    table: "temp_product_images",
+    file: "temp_product_images.sql",
+    model: prisma.tempProductImage,
+    map: (row) => ({
+      id: int(row.id),
+      productId: intOrNull(row.product_id),
+      image: row.image,
+    }),
+  },
 ];
 
 try {

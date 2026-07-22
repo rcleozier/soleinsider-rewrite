@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { buildMetadata } from "@/lib/siteData";
+import { loginWithCredentials, signInWithGoogle } from "@/lib/authActions";
 
 export const metadata: Metadata = buildMetadata({
   title: "Log in",
@@ -9,7 +10,13 @@ export const metadata: Metadata = buildMetadata({
   path: "/login",
 });
 
-export default function LoginPage() {
+type LoginPageProps = {
+  searchParams: Promise<{ error?: string }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const { error } = await searchParams;
+
   return (
     <main className="editorial-home login-page">
       <header className="ed-masthead">
@@ -23,22 +30,28 @@ export default function LoginPage() {
 
       <section className="login-panel">
         <div className="login-notice" role="status">
-          <strong>Accounts are not live yet.</strong>
+          <strong>New to SoleInsider?</strong>
           <p>
-            Sign-in is still being wired up, so this form is disabled — no
-            credentials are collected or stored. In the meantime, the mobile app
-            handles favorites, reminders, and comments.
+            Create an account to favorite releases, track drops, and join the
+            conversation on product pages. You can also get the mobile app for
+            push reminders on release day.
           </p>
           <Link className="ed-more" href="/app">
             Get the app
           </Link>
         </div>
 
-        <form className="login-form" aria-describedby="login-disabled-note">
-          <fieldset disabled>
+        <form className="login-form" action={loginWithCredentials}>
+          <fieldset>
             <legend className="ed-sr-only">Sign in</legend>
 
-            <button className="login-google" type="button">
+            {error ? (
+              <p className="login-error" role="alert">
+                {error}
+              </p>
+            ) : null}
+
+            <button className="login-google" formAction={signInWithGoogle}>
               <GoogleMark />
               Continue with Google
             </button>
@@ -53,6 +66,7 @@ export default function LoginPage() {
               id="login-email"
               name="email"
               placeholder="you@example.com"
+              required
               type="email"
             />
 
@@ -62,6 +76,7 @@ export default function LoginPage() {
               id="login-password"
               name="password"
               placeholder="••••••••"
+              required
               type="password"
             />
 
@@ -70,9 +85,9 @@ export default function LoginPage() {
             </button>
           </fieldset>
 
-          <p className="login-foot" id="login-disabled-note">
-            New here? Account creation opens with sign-in. By using SoleInsider
-            you agree to our <Link href="/terms">Terms</Link> and{" "}
+          <p className="login-foot">
+            New here? <Link href="/signup">Create an account</Link>. By using
+            SoleInsider you agree to our <Link href="/terms">Terms</Link> and{" "}
             <Link href="/privacy">Privacy Policy</Link>.
           </p>
         </form>

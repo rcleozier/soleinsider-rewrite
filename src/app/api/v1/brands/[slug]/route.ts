@@ -6,14 +6,14 @@ import { serializeBrand, serializeRelease } from "@/lib/api/serializers";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const MAX_LIMIT = 200;
+const MAX_LIMIT = 50;
 
 type RouteProps = {
   params: Promise<{ slug: string }>;
 };
 
 /**
- * GET /api/v1/brands/{slug}?limit=200
+ * GET /api/v1/brands/{slug}?limit=50
  * Every release matched against the brand's name patterns, newest first.
  * The target of every `links.api` emitted by /api/v1/brands.
  */

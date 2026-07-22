@@ -29,10 +29,12 @@
     "@prisma/client": "^7.8.0",
     "@sparticuz/chromium": "^149.0.0",
     "axios": "^1.18.1",
+    "bcryptjs": "^3.0.3",
     "cheerio": "^1.2.0",
     "md5": "^2.3.0",
     "mysql2": "^3.22.5",
     "next": "16.2.9",
+    "next-auth": "^5.0.0-beta.32",
     "openai": "^6.48.0",
     "pg": "^8.22.0",
     "prisma": "^7.8.0",
@@ -42,6 +44,7 @@
     "sharp": "^0.35.3"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "26.0.0",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
