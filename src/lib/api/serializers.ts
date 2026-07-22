@@ -1,4 +1,5 @@
 import type { ArticleRecord } from "@/lib/dbArticles";
+import type { BrandDefinition } from "@/lib/brands";
 import type { LegacyRelease } from "@/lib/legacyMobileApi";
 import { getProductImageUrl } from "@/lib/productImages";
 import {
@@ -139,6 +140,24 @@ export function serializeArticle(article: ArticleRecord): ApiArticle {
     links: {
       web: `${siteUrl}${article.legacyUrl}`,
       api: `/api/v1/articles/${article.slug}`,
+    },
+  };
+}
+
+export type ApiBrand = {
+  slug: string;
+  name: string;
+  links: { web: string; api: string };
+};
+
+/** Brand definitions redirect to an established SEO archive page when one exists (e.g. /nike-releases). */
+export function serializeBrand(brand: BrandDefinition): ApiBrand {
+  return {
+    slug: brand.slug,
+    name: brand.label,
+    links: {
+      web: `${siteUrl}${brand.href ?? `/brands/${brand.slug}`}`,
+      api: `/api/v1/brands/${brand.slug}`,
     },
   };
 }
