@@ -41,7 +41,10 @@ export async function saveTempReleaseFromPayload(
       OR: [
         { hash: normalized.hash },
         { link: normalized.link },
-        normalized.sku ? { sku: normalized.sku } : undefined,
+        // "TBA" is the sentinel default for a missing SKU, not a real match key —
+        // matching on it would collide unrelated releases together (see incident
+        // where a fresh POST silently overwrote an unrelated rejected row).
+        normalized.sku && normalized.sku !== "TBA" ? { sku: normalized.sku } : undefined,
       ].filter(Boolean) as { hash?: string; link?: string; sku?: string }[],
     },
   });

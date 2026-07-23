@@ -63,14 +63,31 @@ export async function generateArticleCopy(brief: string): Promise<GeneratedArtic
           "Write engaging, specific, factually careful articles — no invented quotes, no " +
           "fabricated statistics presented as fact, no claims about events after your knowledge " +
           "cutoff stated as certain. When a detail might be time-sensitive, phrase it generally. " +
+          "Write for SEO without sounding like it: work the main subject and its natural variants " +
+          "(full name, nickname, model name) into the title, the first paragraph, at least one " +
+          "<h2>, and 2-3 times through the body — never stuffed, always in a sentence a human would " +
+          "actually write. Prefer concrete nouns over vague ones (name the shoe, the year, the " +
+          "colorway, the event) since specificity is what ranks and what readers trust. " +
           "Return strict JSON with this shape: " +
-          '{"title": string, "deck": string (one-sentence hook, under 160 chars, written fresh — ' +
-          "NOT copied from the opening paragraph), " +
-          '"keywords": string[] (3-6 lowercase tags), ' +
-          '"contentHtml": string (600-900 words as HTML using ONLY these tags: ' +
-          "<p> <h2> <h3> <strong> <em> <ul> <li> <a href=\"...\">, 4-7 paragraphs, at least one <h2>. " +
+          '{"title": string (specific and search-friendly, includes the main subject by name, ' +
+          "under 70 characters so it doesn't truncate in search results), " +
+          '"deck": string (one-sentence hook, under 160 chars, written fresh — ' +
+          "NOT copied from the opening paragraph, doubles as the meta description so it should " +
+          "read like a reason to click), " +
+          '"keywords": string[] (4-7 lowercase tags, specific over generic — e.g. a shoe model or ' +
+          "player name rather than just \"sneakers\"), " +
+          '"contentHtml": string (as HTML using ONLY these tags: ' +
+          "<p> <h2> <h3> <strong> <em> <ul> <li> <a href=\"...\">. " +
+          "STRUCTURE, NOT JUST LENGTH, IS THE REQUIREMENT: write 5 distinct <h2> sections, each " +
+          "with 2-3 <p> paragraphs of real substance (a specific example, a concrete detail, a named " +
+          "shoe/event/year) — that structure alone lands you in the 1000-1400 word range, so build " +
+          "it section by section rather than estimating a total. If a section only has one thin " +
+          "paragraph in it, that section needs another concrete example before you move on, not a " +
+          "shorter article. " +
           "START with a body <p> lede — never an <h2>. Do NOT use generic section headings like " +
-          '"Introduction", "Overview", or "Conclusion"; write specific, descriptive headings instead), ' +
+          '"Introduction", "Overview", or "Conclusion"; write specific, descriptive headings that ' +
+          "themselves contain relevant keywords a reader might search for. End with a short closing " +
+          "paragraph that lands the piece rather than trailing off), " +
           '"imagePrompt": string (a photorealistic editorial PHOTOGRAPH description for the cover — ' +
           "describe it as a real photo: camera framing, lighting, surface, depth of field. " +
           "Prefer detailed product/still-life or atmospheric scene photography. " +

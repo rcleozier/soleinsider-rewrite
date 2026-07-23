@@ -1,6 +1,9 @@
 import path from "node:path";
 import { createRequire } from "node:module";
+import { loadEnvFile } from "node:process";
 import { fileURLToPath } from "node:url";
+
+loadEnvFile();
 
 const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -26,7 +29,13 @@ for (const crawler of selected) {
   }
 
   console.log(`Starting ${crawler} crawler...`);
-  await runCrawler(crawler);
+
+  try {
+    await runCrawler(crawler);
+  } catch (error) {
+    console.error(`${crawler} crawler failed:`, error instanceof Error ? error.message : error);
+    process.exitCode = 1;
+  }
 }
 
 async function runCrawler(crawler) {

@@ -35,7 +35,7 @@ export default async function ProfilePage() {
         <h1>{session.user.name || session.user.email}</h1>
         <p className="ed-deck">{session.user.email}</p>
         <form action={signOutAction}>
-          <button className="ed-more profile-signout" type="submit">
+          <button className="profile-signout" type="submit">
             Sign out
           </button>
         </form>

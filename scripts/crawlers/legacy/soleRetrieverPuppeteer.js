@@ -71,6 +71,7 @@ exports.run = async function () {
       console.log(`📡 Navigating: ${START_URL}`);
       await page.goto(START_URL, { waitUntil: "networkidle2", timeout: 45000 });
       await delay(1500);
+      await autoScrollToLoadMore(page);
 
       let releases = await collectListingReleases(page);
       console.log(`📊 Found ${releases.length} release entries on listing (pre-cap)`);
@@ -130,6 +131,26 @@ exports.run = async function () {
     } finally {
       if (browser) await browser.close();
     }
+  };
+
+  // The listing renders only a handful of cards up front and lazy-loads more
+  // as you scroll — without this, collectListingReleases only ever sees
+  // whatever fit in the initial viewport (as few as 2 entries).
+  const autoScrollToLoadMore = async (page) => {
+    const maxScrolls = Number(process.env.SOLERETRIEVER_MAX_SCROLLS || 8);
+    let previousHeight = 0;
+
+    for (let i = 0; i < maxScrolls; i++) {
+      const currentHeight = await page.evaluate(() => document.body.scrollHeight);
+      if (currentHeight === previousHeight) break;
+      previousHeight = currentHeight;
+
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+      await delay(1200);
+    }
+
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await delay(300);
   };
 
   const collectListingReleases = async (page) => {

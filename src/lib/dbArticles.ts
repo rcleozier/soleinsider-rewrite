@@ -87,7 +87,7 @@ function mapDbArticle(row: DbArticle): ArticleRecord {
     slug: row.slug?.trim() || String(row.id),
     title,
     deck: toDeck(cleanedText, title),
-    author: "Rob",
+    author: "SoleInsider Editorial",
     date,
     category,
     image: normalizeArticleImage(row.cover),

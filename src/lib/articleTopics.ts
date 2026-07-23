@@ -15,6 +15,7 @@ export type ArticleTopic = {
 };
 
 const sportsSubjects = [
+  // Current NBA stars with an active signature line or heavy sneaker-culture presence
   "LeBron James",
   "Kevin Durant",
   "Giannis Antetokounmpo",
@@ -29,13 +30,38 @@ const sportsSubjects = [
   "Damian Lillard",
   "Kyrie Irving",
   "Victor Wembanyama",
+  "James Harden",
+  "Russell Westbrook",
+  "Chris Paul",
+  "Klay Thompson",
+  "Paul George",
+  "DeMar DeRozan",
+  "Trae Young",
+  "Zach LaVine",
+  "Jalen Brunson",
+  "Shai Gilgeous-Alexander",
+  // Women's basketball with growing signature-shoe and sneaker-culture presence
   "Caitlin Clark",
   "A'ja Wilson",
   "Sabrina Ionescu",
+  "Angel Reese",
+  // Football, both with major Nike sneaker-culture footprints
   "Patrick Mahomes",
   "Travis Kelce",
+  // Retired legends whose signature sneakers built modern sneaker culture
   "Michael Jordan",
   "Kobe Bryant",
+  "Allen Iverson",
+  "Shaquille O'Neal",
+  "Charles Barkley",
+  "Scottie Pippen",
+  "Penny Hardaway",
+  "Grant Hill",
+  "Vince Carter",
+  "Tracy McGrady",
+  "Dwyane Wade",
+  "Tim Duncan",
+  "Bo Jackson",
 ];
 
 const sportsAngles: { angle: string; template: (subject: string) => string }[] = [
