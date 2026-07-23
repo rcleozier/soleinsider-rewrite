@@ -39,11 +39,15 @@ export async function getDbCombinedReleaseDates(limit = 500) {
 }
 
 export async function getDbUpcomingReleases(limit = 500) {
+  const twoDaysAgo = new Date();
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+  twoDaysAgo.setHours(0, 0, 0, 0);
+
   return getDbReleaseList({
     types: ["sneakers", "clothing"],
     order: "release_asc",
     limit,
-    releaseFrom: new Date(),
+    releaseFrom: twoDaysAgo,
   });
 }
 

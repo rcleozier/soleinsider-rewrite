@@ -2838,8 +2838,8 @@ h2,
 
 .comment-form {
   display: grid;
-  gap: 10px;
-  margin-bottom: 24px;
+  gap: 14px;
+  margin-bottom: 32px;
 }
 
 .comment-form textarea {
@@ -5656,20 +5656,20 @@ h2,
 
 /* Even bands below the fold instead of stacked ad-hoc gaps. */
 .related-products {
-  margin-top: 34px;
-  padding-top: 30px;
-  padding-bottom: 30px;
+  margin-top: 56px;
+  padding-top: 40px;
+  padding-bottom: 40px;
 }
 
 .related-products + .content-band,
 .content-band--light {
-  padding-top: 30px;
+  padding-top: 40px;
   padding-bottom: 40px;
 }
 
 .comments-heading {
   width: min(1180px, calc(100% - 40px));
-  margin: 0 auto 14px;
+  margin: 56px auto 18px;
 }
 
 .comments-heading h2 {
