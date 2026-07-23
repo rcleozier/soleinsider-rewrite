@@ -79,15 +79,15 @@ export function CopDropButtons({
       data-feedback={feedback}
     >
       <div className="vote-actions__buttons">
-        <button onClick={() => submitVote("1")} type="button">
+        <button className="vote-actions__cop" onClick={() => submitVote("1")} type="button">
           <span aria-hidden="true">▲</span>
           {shouldShowPercentages ? `COP · ${percentages.yes}%` : "COP"}
-          {!shouldShowPercentages && totalVotes >= 10 ? <strong>{votes.yes}</strong> : null}
+          {totalVotes > 0 ? <strong className="vote-actions__cop-strong">{votes.yes}</strong> : null}
         </button>
-        <button onClick={() => submitVote("0")} type="button">
+        <button className="vote-actions__drop" onClick={() => submitVote("0")} type="button">
           <span aria-hidden="true">▼</span>
           {shouldShowPercentages ? `DROP · ${percentages.no}%` : "DROP"}
-          {!shouldShowPercentages && totalVotes >= 10 ? <strong>{votes.no}</strong> : null}
+          {totalVotes > 0 ? <strong className="vote-actions__drop-strong">{votes.no}</strong> : null}
         </button>
       </div>
       {shouldShowStatus ? (

@@ -2770,6 +2770,17 @@ h2,
   border: 1px solid rgba(16, 17, 20, 0.18);
   background: transparent;
   color: var(--ink);
+  transition: border-color 160ms ease, color 160ms ease;
+}
+
+.vote-actions--secondary .vote-actions__cop:hover {
+  border-color: #167a3f;
+  color: #167a3f;
+}
+
+.vote-actions--secondary .vote-actions__drop:hover {
+  border-color: #c92a2a;
+  color: #c92a2a;
 }
 
 .vote-actions strong {
@@ -2890,8 +2901,14 @@ h2,
   text-transform: uppercase;
 }
 
-.vote-actions__cop-strong {
+.vote-actions strong.vote-actions__cop-strong {
+  background: rgba(22, 122, 63, 0.12);
   color: #167a3f;
+}
+
+.vote-actions strong.vote-actions__drop-strong {
+  background: rgba(201, 42, 42, 0.1);
+  color: #c92a2a;
 }
 
 .countdown-module--state {
@@ -6736,6 +6753,19 @@ a.score-card:hover {
   margin-top: 8px !important;
   color: var(--muted);
   font-size: 0.78rem;
+}
+
+/* The profile lists only render an image + body column (no date/price
+   columns like the calendar rows), so the shared .cal-rows grid needs a
+   narrower track layout here. */
+.profile-section .cal-rows li {
+  grid-template-columns: 92px minmax(0, 1fr);
+}
+
+@media (max-width: 700px) {
+  .profile-section .cal-rows li {
+    grid-template-columns: 74px minmax(0, 1fr);
+  }
 }
 
 /* ==========================================================================

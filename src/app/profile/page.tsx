@@ -57,6 +57,7 @@ export default async function ProfilePage() {
                     <h3>
                       <Link href={favorite.url}>{favorite.name}</Link>
                     </h3>
+                    <p className="cal-row__meta">Favorited {formatDate(favorite.favoritedAt)}</p>
                   </div>
                 </li>
               ))}
@@ -85,6 +86,9 @@ export default async function ProfilePage() {
                     <h3>
                       <Link href={vote.url}>{vote.name}</Link>
                     </h3>
+                    {vote.votedAt ? (
+                      <p className="cal-row__meta">{formatDate(vote.votedAt)}</p>
+                    ) : null}
                   </div>
                 </li>
               ))}
