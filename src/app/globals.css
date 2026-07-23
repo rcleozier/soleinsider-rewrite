@@ -2785,6 +2785,99 @@ h2,
   font-size: 0.72rem;
 }
 
+.release-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.release-actions .vote-actions {
+  margin-top: 0;
+}
+
+.favorite-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  margin-top: 16px;
+  padding: 0 14px;
+  border: 1px solid rgba(16, 17, 20, 0.18);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.favorite-button[data-active="true"] {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: #ffffff;
+}
+
+.favorite-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.comment-form {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.comment-form textarea {
+  min-height: 84px;
+  padding: 12px 14px;
+  border: 1px solid rgba(16, 17, 20, 0.18);
+  border-radius: 12px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.9rem;
+  resize: vertical;
+}
+
+.comment-form button {
+  justify-self: start;
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-text);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.comment-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.comment-form__error {
+  margin: 0;
+  color: #c92a2a;
+  font-size: 0.82rem;
+}
+
+.comment-form__login-prompt {
+  margin: 0 0 24px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.comment-form__login-prompt a {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
 .vote-actions p {
   display: flex;
   flex-wrap: wrap;

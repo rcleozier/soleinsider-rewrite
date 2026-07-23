@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { CommentsSection } from "@/components/CommentsSection";
 import { CopDropButtons } from "@/components/CopDropButtons";
+import { FavoriteButton } from "@/components/FavoriteButton";
 import { LiveCountdown } from "@/components/LiveCountdown";
 import { ProductImageCarousel } from "@/components/ProductImageCarousel";
 import { RelatedProductsCarousel } from "@/components/RelatedProductsCarousel";
@@ -108,7 +110,10 @@ export function ReleaseDetailView({
               <dd>${release.price}</dd>
             </div>
           </dl>
-          <CopDropButtons release={release} variant="secondary" />
+          <div className="release-actions">
+            <CopDropButtons release={release} variant="secondary" />
+            <FavoriteButton productId={release.product_id} />
+          </div>
           <section className="release-details-section">
             <h2>Release details</h2>
             {descriptionParagraphs.length ? (
@@ -142,32 +147,7 @@ export function ReleaseDetailView({
         <div className="section-heading section-heading--compact comments-heading">
           <h2>Latest comments</h2>
         </div>
-        <div className="comment-list">
-          {comments.length ? (
-            comments.map((comment) => (
-              <article key={comment.id}>
-                <span className="comment-avatar" aria-hidden="true">
-                  SI
-                </span>
-                <div>
-                  <header>
-                    <strong>SoleInsider visitor</strong>
-                    <time>{comment.comment_date || "Recent"}</time>
-                  </header>
-                  <p>{comment.comment}</p>
-                </div>
-                <footer>
-                  <span>{comment.votes_up} upvotes</span>
-                </footer>
-              </article>
-            ))
-          ) : (
-            <article className="comment-empty">
-              <h3>No comments yet — the conversation starts in the app</h3>
-              <Link href="/download">Download the app</Link>
-            </article>
-          )}
-        </div>
+        <CommentsSection productId={release.product_id} initialComments={comments} />
       </section>
     </main>
   );

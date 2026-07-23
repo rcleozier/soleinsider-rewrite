@@ -167,6 +167,19 @@ model Member {
   @@map("members")
 }
 
+/// A member's saved sneakers — distinct from a cop/drop vote (ReleaseInterest),
+/// which is an opinion on the release, not a bookmark.
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  memberId  Int      @map("member_id")
+  productId Int      @map("product_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+
+  @@unique([memberId, productId], map: "favorites_member_product_key")
+  @@index([memberId], map: "favorites_member_id_idx")
+  @@map("favorites")
+}
+
 model MemberLogin {
   id        Int       @id @default(autoincrement())
   memberId  Int?      @map("member_id")

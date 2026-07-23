@@ -4,12 +4,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { signOutAction } from "@/lib/authActions";
-import { getMemberComments, getMemberFavorites } from "@/lib/memberProfile";
+import { getMemberComments, getMemberFavorites, getMemberVotes } from "@/lib/memberProfile";
 import { buildMetadata } from "@/lib/siteData";
 
 export const metadata: Metadata = buildMetadata({
   title: "Your profile",
-  description: "Your favorited releases and comments on SoleInsider.",
+  description: "Your favorited releases, votes, and comments on SoleInsider.",
   path: "/profile",
 });
 
@@ -23,8 +23,9 @@ export default async function ProfilePage() {
   }
 
   const memberId = Number(session.user.id);
-  const [favorites, comments] = await Promise.all([
+  const [favorites, votes, comments] = await Promise.all([
     getMemberFavorites(memberId),
+    getMemberVotes(memberId),
     getMemberComments(memberId),
   ]);
 
@@ -63,8 +64,34 @@ export default async function ProfilePage() {
           </div>
         ) : (
           <p className="profile-empty">
-            No favorited releases yet. Cop a release from the app to see it here.
+            No favorited releases yet. Tap the heart on a release to save it here.
           </p>
+        )}
+      </section>
+
+      <section className="profile-section">
+        <h2>Your votes</h2>
+
+        {votes.length ? (
+          <div className="cal-list">
+            <ol className="cal-rows">
+              {votes.map((vote) => (
+                <li key={vote.id}>
+                  <Link className="cal-row__media" href={vote.url}>
+                    <Image src={vote.image} alt="" width={160} height={160} sizes="120px" />
+                  </Link>
+                  <div className="cal-row__body">
+                    <p className="ed-cat">{vote.status === "cop" ? "Copped" : "Passed"}</p>
+                    <h3>
+                      <Link href={vote.url}>{vote.name}</Link>
+                    </h3>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        ) : (
+          <p className="profile-empty">No votes yet. Cop or drop a release to see it here.</p>
         )}
       </section>
 

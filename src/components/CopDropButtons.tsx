@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
 import type { LegacyRelease } from "@/lib/legacyMobileApi";
 
 export function CopDropButtons({
@@ -12,6 +13,7 @@ export function CopDropButtons({
   showPercentages?: boolean;
   variant?: "solid" | "secondary";
 }) {
+  const { data: session } = useSession();
   const [votes, setVotes] = useState(() => ({
     yes: Number(release.yes_votes) || 0,
     no: Number(release.no_votes) || 0,
@@ -33,17 +35,25 @@ export function CopDropButtons({
     setFeedback("Saving vote...");
 
     try {
-      const response = await fetch("/mobileapi/coporNot", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          product_id: release.product_id,
-          member_id: "0",
-          status,
-        }),
-      });
+      // Signed-in members get a real, replaceable per-member vote tracked on
+      // their profile; anonymous visitors keep the old always-append behavior.
+      const response = session
+        ? await fetch(`/api/v1/releases/${release.product_id}/vote`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: status === "1" ? "cop" : "drop" }),
+          })
+        : await fetch("/mobileapi/coporNot", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({
+              product_id: release.product_id,
+              member_id: "0",
+              status,
+            }),
+          });
 
       if (!response.ok) {
         throw new Error("Vote request failed");
@@ -51,7 +61,7 @@ export function CopDropButtons({
 
       const result = await response.json();
 
-      if (!result) {
+      if (!result || (session && result.success === false)) {
         throw new Error("Vote was not accepted");
       }
 
