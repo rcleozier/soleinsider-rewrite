@@ -8,8 +8,19 @@ import { signIn, signOut } from "@/lib/auth";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export async function signInWithGoogle() {
-  await signIn("google", { redirectTo: "/" });
+/**
+ * Only a same-origin relative path is ever safe to hand to Auth.js's
+ * redirectTo — anything else (a full URL, a protocol-relative "//evil.com")
+ * risks an open redirect through our own login form.
+ */
+function sanitizeCallbackUrl(value: FormDataEntryValue | null) {
+  const url = typeof value === "string" ? value : "";
+
+  return /^\/(?!\/)/.test(url) ? url : "/";
+}
+
+export async function signInWithGoogle(formData: FormData) {
+  await signIn("google", { redirectTo: sanitizeCallbackUrl(formData.get("callbackUrl")) });
 }
 
 export async function signOutAction() {
@@ -19,13 +30,14 @@ export async function signOutAction() {
 export async function loginWithCredentials(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
+  const callbackUrl = sanitizeCallbackUrl(formData.get("callbackUrl"));
 
   if (!email || !password) {
     redirect(`/login?error=${encodeURIComponent("Enter your email and password.")}`);
   }
 
   try {
-    await signIn("credentials", { email, password, redirectTo: "/" });
+    await signIn("credentials", { email, password, redirectTo: callbackUrl });
   } catch (error) {
     if (error instanceof AuthError) {
       redirect(`/login?error=${encodeURIComponent("That email and password don't match.")}`);
@@ -39,6 +51,7 @@ export async function signUpWithCredentials(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
+  const callbackUrl = sanitizeCallbackUrl(formData.get("callbackUrl"));
 
   if (!name) {
     redirect(`/signup?error=${encodeURIComponent("Enter your name.")}`);
@@ -72,7 +85,7 @@ export async function signUpWithCredentials(formData: FormData) {
   });
 
   try {
-    await signIn("credentials", { email, password, redirectTo: "/" });
+    await signIn("credentials", { email, password, redirectTo: callbackUrl });
   } catch (error) {
     if (error instanceof AuthError) {
       redirect("/login");

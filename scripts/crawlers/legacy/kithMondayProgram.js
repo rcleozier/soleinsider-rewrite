@@ -2,6 +2,7 @@
 const axios = require("axios");
 const md5 = require("md5");
 const querystring = require("querystring");
+const { logSaveResult } = require("./logSaveResult");
 
 const SOURCE_URL = "https://kith.com/collections/kith-monday-program/products.json?limit=20";
 const INGEST_URL =
@@ -61,8 +62,8 @@ exports.run = async function () {
         continue;
       }
 
-      console.log("Release payload before POST:", release);
-      await sendRequest(release);
+      const response = await sendRequest(release);
+      logSaveResult(release.title, response);
       posted += 1;
       await delay(120);
     }

@@ -24,13 +24,25 @@ export function LiveCountdown({
     return () => window.clearInterval(timer);
   }, []);
 
-  const distance = releaseDate ? Math.max(0, releaseDate.getTime() - now) : 0;
-  const parts = toParts(distance);
   const isElapsed = Boolean(releaseDate && releaseDate.getTime() <= now);
+  const distance = releaseDate && !isElapsed ? releaseDate.getTime() - now : 0;
+  const parts = toParts(distance);
+
+  if (isElapsed && releaseDate) {
+    return (
+      <section className="countdown-module countdown-module--state" aria-label={label}>
+        <p>Drop status</p>
+        <strong className="countdown-state">Released {formatTimeAgo(releaseDate, now)}</strong>
+        <Link className="countdown-reminder-link" href="/calendar">
+          See what's dropping next
+        </Link>
+      </section>
+    );
+  }
 
   return (
     <section className="countdown-module" aria-label={label}>
-      <p>{isElapsed ? "Drop status" : label}</p>
+      <p>{label}</p>
       {releaseDate ? (
         <div className="countdown-grid">
           {parts.map((part, index) => (
@@ -44,12 +56,35 @@ export function LiveCountdown({
       ) : (
         <strong className="countdown-state">Date TBA — get notified</strong>
       )}
-      {isElapsed ? <span className="countdown-state">Drop is live or elapsed</span> : null}
       <Link className="countdown-reminder-link" href="/download">
         Get a release reminder
       </Link>
     </section>
   );
+}
+
+function formatTimeAgo(releaseDate: Date, now: number) {
+  const seconds = Math.floor((now - releaseDate.getTime()) / 1000);
+
+  if (seconds < 60) return "just now";
+
+  const units: [string, number][] = [
+    ["year", 31536000],
+    ["month", 2592000],
+    ["week", 604800],
+    ["day", 86400],
+    ["hour", 3600],
+    ["minute", 60],
+  ];
+
+  for (const [unit, unitSeconds] of units) {
+    const value = Math.floor(seconds / unitSeconds);
+    if (value >= 1) {
+      return `${value} ${unit}${value === 1 ? "" : "s"} ago`;
+    }
+  }
+
+  return "just now";
 }
 
 function parseLegacyCalendarDate(value: string) {

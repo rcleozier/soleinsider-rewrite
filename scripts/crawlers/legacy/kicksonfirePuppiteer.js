@@ -4,6 +4,7 @@ const axios = require("axios");
 const md5 = require("md5");
 const querystring = require("querystring");
 const { launchBrowser } = require("./browser");
+const { logSaveResult } = require("./logSaveResult");
 
 exports.run = function (url) {
   const delay = (ms) => new Promise((res) => setTimeout(res, ms));
@@ -96,12 +97,11 @@ exports.run = function (url) {
           releaseInformation.releaseDate.length > 6 &&
           !isNaN(releaseInformation.price)
         ) {
-          console.log("Release payload before POST:", releaseInformation);
-
-          saveResponse = await sendRequest(releaseInformation);
+          const saveResponse = await sendRequest(releaseInformation);
+          logSaveResult(releaseInformation.title, saveResponse);
         }
       } catch (error) {
-        console.error(error.data);
+        console.log(`❌ ${releaseInformation?.title || releaseUrl} — request failed: ${error.message}`);
       }
 
       await delay(500);

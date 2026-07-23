@@ -4,6 +4,7 @@ const cheerio = require("cheerio");
 const vm = require("vm");
 const md5 = require("md5");
 const querystring = require("querystring");
+const { logSaveResult } = require("./logSaveResult");
 
 const SOURCE_URL = "https://supdrops.com/";
 const INGEST_URL =
@@ -111,8 +112,8 @@ exports.run = async function () {
             continue;
           }
 
-          console.log("Release payload before POST:", release);
-          await sendRequest(release);
+          const response = await sendRequest(release);
+          logSaveResult(release.title, response);
           posted += 1;
           await delay(120);
         }

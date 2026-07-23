@@ -4,6 +4,7 @@ const axios = require("axios");
 const md5 = require("md5");
 const querystring = require("querystring");
 const { launchBrowser } = require("./browser");
+const { logSaveResult } = require("./logSaveResult");
 
 // Test mode flag - set to true to log payloads without sending to server
 const TEST_MODE = false; // Change to true for dry-run logging only
@@ -143,8 +144,12 @@ exports.run = function () {
       const hasStyle = /-[A-Z]{1,3}[0-9]{3,6}-[0-9]{2,4}\/?.*$/i.test(path) || /-\d{6}-\d{3}\/?.*$/i.test(path);
       const looksLikePost = /^\/[^\/]+\/?$/.test(path) || /^\/[^\/]+\/[^\/]+\/?$/.test(path);
       
-      // Exclude if it's clearly a listing or category page
-      if (path.match(/^\/(sneaker-release-dates|release-dates|jordan-release-dates|nike-kobe-release-dates)(\/page\/|\/)?$/)) {
+      // Exclude if it's clearly a listing or category page. NiceKicks has a
+      // "*-release-dates" listing for every brand/model (sneaker-, jordan-,
+      // nike-kobe-, nike-dunk-, ...) — match the pattern generally rather than
+      // enumerating each one, since a missed slug gets scraped as a fake
+      // "product" (title = the listing's own H1, no date/price/image).
+      if (path.match(/^\/[a-z0-9-]*release-dates(\/page\/|\/)?$/)) {
         return false;
       }
       
@@ -313,19 +318,20 @@ exports.run = function () {
         const fullUrl = href.startsWith("http") ? href : `https://www.nicekicks.com${href}`;
         
         console.log(`\n📝 [Page ${pageNum}] Processing ${i + 1}/${MAX_PROCESSING_PER_PAGE}: ${title.substring(0, 50)}...`);
-        console.log(`🔗 URL: ${fullUrl}`);
-
         // Get detailed release information from individual page
         const releaseInfo = await getReleaseDetails(fullUrl, title, detailPage, sneakerLink);
-        
+
         if (releaseInfo && releaseInfo.title) {
           // Send to SoleInsider
           try {
             const saveResponse = await sendRequest(releaseInfo);
-            console.log(`✅ Successfully saved: ${releaseInfo.title.substring(0, 40)}...`);
+            logSaveResult(releaseInfo.title, saveResponse, {
+              testMode: saveResponse?.statusText === "OK (TEST MODE)",
+            });
+
             processedCount++;
           } catch (error) {
-            console.error(`❌ Error saving ${releaseInfo.title.substring(0, 30)}...:`, error.message);
+            // sendRequest already logged a one-liner for this failure.
           }
         } else {
           console.log(`⚠️  Skipping: Could not extract release info`);
@@ -554,12 +560,6 @@ exports.run = function () {
         return null;
       }
 
-      console.log(`    📋 Extracted: ${release.title.substring(0, 30)}...`);
-      console.log(`    📅 Date: ${release.releaseDate || "Not found"}`);
-      console.log(`    💰 Price: ${release.price || "Not found"}`);
-      console.log(`    🏷️  SKU: ${release.sku || "Not found"}`);
-      console.log(`    🖼️  Images: ${release.images ? "Found" : "Not found"}`);
-
       return release;
 
     } catch (error) {
@@ -584,20 +584,7 @@ exports.run = function () {
         type: release.type
       };
 
-      // Log payload fields
-      console.log(`  📋 Payload preview:`);
-      console.log(`  - url: ${payload.url}`);
-      console.log(`  - color: ${payload.color}`);
-      console.log(`  - price: ${payload.price}`);
-      console.log(`  - sku: ${payload.sku}`);
-      console.log(`  - releaseDate: ${payload.releaseDate}`);
-      console.log(`  - images: ${payload.images?.substring(0, 120)}`);
-      console.log(`  - type: ${payload.type}`);
-
       if (TEST_MODE || process.env.NK_TEST_MODE === '1') {
-        console.log(`  🧪 TEST MODE: Skipping POST to ingest endpoint`);
-        const formBody = querystring.stringify(payload);
-        console.log(`  🧾 x-www-form-urlencoded body (${formBody.length} chars): ${formBody.substring(0, 500)}${formBody.length > 500 ? '...' : ''}`);
         return { status: 200, statusText: 'OK (TEST MODE)' };
       }
 
@@ -614,12 +601,10 @@ exports.run = function () {
       const postUrl =
         process.env.SOLEINSIDER_INGEST_URL || "http://localhost:3000/public/ingest/saveRelease";
       const formBody = querystring.stringify(payload);
-      console.log(`  🌐 POST URL: ${postUrl}`);
-      console.log(`  🧾 x-www-form-urlencoded body (${formBody.length} chars): ${formBody.substring(0, 500)}${formBody.length > 500 ? '...' : ''}`);
 
       return await axios.post(postUrl, formBody, config);
     } catch (err) {
-      console.error(`  ❌ Error sending request: ${err.message}`);
+      console.log(`❌ ${release.title} — request failed: ${err.message}`);
       throw err;
     }
   };

@@ -11,11 +11,11 @@ export const metadata: Metadata = buildMetadata({
 });
 
 type LoginPageProps = {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; callbackUrl?: string }>;
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const { error } = await searchParams;
+  const { error, callbackUrl } = await searchParams;
 
   return (
     <main className="editorial-home login-page">
@@ -49,6 +49,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           ) : null}
 
           <form action={signInWithGoogle}>
+            {callbackUrl ? <input name="callbackUrl" type="hidden" value={callbackUrl} /> : null}
             <button className="login-google" type="submit">
               <GoogleMark />
               Continue with Google
@@ -62,6 +63,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <form action={loginWithCredentials}>
             <fieldset>
               <legend className="ed-sr-only">Sign in</legend>
+
+              {callbackUrl ? <input name="callbackUrl" type="hidden" value={callbackUrl} /> : null}
 
               <label htmlFor="login-email">Email</label>
               <input

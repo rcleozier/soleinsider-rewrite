@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { findRealCoverImage } from "@/lib/articleCoverImage";
 import { getAllTopics, type ArticleCategory, type ArticleTopic } from "@/lib/articleTopics";
 import { generateArticleCopy, generateArticleCoverImage, isOpenAiConfigured } from "@/lib/openaiClient";
 import { isS3Configured, uploadBufferToS3 } from "@/lib/s3";
@@ -88,19 +89,7 @@ async function pickAvailableTopics(count: number, category?: ArticleCategory) {
 
 async function generateOneArticle(topic: ArticleTopic): Promise<GeneratedArticleResult> {
   const copy = await generateArticleCopy(topic.brief);
-  const rawImage = await generateArticleCoverImage(copy.imagePrompt);
-
-  // Crop to a 16:9 editorial banner and re-encode. `cover` fit keeps the
-  // subject centred rather than letterboxing the square source.
-  const { default: sharp } = await import("sharp");
-
-  const optimizedImage = await sharp(rawImage)
-    .resize(COVER_WIDTH, COVER_HEIGHT, { fit: "cover", position: "attention" })
-    .webp({ quality: COVER_QUALITY })
-    .toBuffer();
-
-  const key = `articles/${topic.slug}-${Date.now()}.webp`;
-  const coverUrl = await uploadBufferToS3(optimizedImage, key, "image/webp");
+  const coverUrl = await resolveCoverImage(topic, copy.imagePrompt);
 
   const keywords = Array.from(new Set([...copy.keywords, topic.category]))
     .join(", ")
@@ -121,4 +110,33 @@ async function generateOneArticle(topic: ArticleTopic): Promise<GeneratedArticle
   });
 
   return { success: true, topic, slug: topic.slug, articleId: article.id };
+}
+
+/**
+ * Prefers a real photo — either a matching sneaker already in our product
+ * catalog or a stock photo — over AI generation, which has no guarantee of
+ * depicting the actual shoe/person the article is about. AI generation is
+ * only a last resort so article creation never hard-fails on image sourcing.
+ */
+async function resolveCoverImage(topic: ArticleTopic, imagePrompt: string): Promise<string> {
+  const realImage = await findRealCoverImage(topic);
+
+  if (realImage) {
+    return realImage;
+  }
+
+  const rawImage = await generateArticleCoverImage(imagePrompt);
+
+  // Crop to a 16:9 editorial banner and re-encode. `cover` fit keeps the
+  // subject centred rather than letterboxing the square source.
+  const { default: sharp } = await import("sharp");
+
+  const optimizedImage = await sharp(rawImage)
+    .resize(COVER_WIDTH, COVER_HEIGHT, { fit: "cover", position: "attention" })
+    .webp({ quality: COVER_QUALITY })
+    .toBuffer();
+
+  const key = `articles/${topic.slug}-${Date.now()}.webp`;
+
+  return uploadBufferToS3(optimizedImage, key, "image/webp");
 }

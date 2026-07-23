@@ -11,11 +11,11 @@ export const metadata: Metadata = buildMetadata({
 });
 
 type SignupPageProps = {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; callbackUrl?: string }>;
 };
 
 export default async function SignupPage({ searchParams }: SignupPageProps) {
-  const { error } = await searchParams;
+  const { error, callbackUrl } = await searchParams;
 
   return (
     <main className="editorial-home login-page">
@@ -48,6 +48,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           ) : null}
 
           <form action={signInWithGoogle}>
+            {callbackUrl ? <input name="callbackUrl" type="hidden" value={callbackUrl} /> : null}
             <button className="login-google" type="submit">
               <GoogleMark />
               Continue with Google
@@ -61,6 +62,8 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           <form action={signUpWithCredentials}>
             <fieldset>
               <legend className="ed-sr-only">Create an account</legend>
+
+              {callbackUrl ? <input name="callbackUrl" type="hidden" value={callbackUrl} /> : null}
 
               <label htmlFor="signup-name">Name</label>
               <input autoComplete="name" id="signup-name" name="name" placeholder="Jordan Smith" required type="text" />

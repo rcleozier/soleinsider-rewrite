@@ -4,6 +4,7 @@ const axios = require("axios");
 const md5 = require("md5");
 const querystring = require("querystring");
 const { launchBrowser } = require("./browser");
+const { logSaveResult } = require("./logSaveResult");
 
 // Set SOLERETRIEVER_TEST_MODE=1 in env to log payloads without sending
 const TEST_MODE = process.env.SOLERETRIEVER_TEST_MODE === "1";
@@ -95,9 +96,6 @@ exports.run = async function () {
           const entry = releases[i];
           const fullUrl = entry.href.startsWith("http") ? entry.href : `${BASE_URL}${entry.href}`;
 
-          console.log(`\n📝 Processing ${i + 1}/${releases.length}: ${entry.title.substring(0, 60)}...`);
-          console.log(`🔗 URL: ${fullUrl}`);
-
           const release = await getReleaseDetails(detailPage, fullUrl, entry.title);
 
           release.title = !isBadTitle(release.title) ? release.title : (entry.title || release.title);
@@ -109,11 +107,12 @@ exports.run = async function () {
           if (!release.images || /\.webp(?:$|\?)/i.test(release.images)) release.images = "";
 
           if (!release || isBadTitle(release.title) || !isValidReleaseDate(release.releaseDate) || !release.images) {
-            console.log("  ⏭️  Skipping - failed validation (title/date/image)");
+            console.log(`⏭️  ${entry.title} — skipped, failed validation (title/date/image)`);
             continue;
           }
 
-          await sendRequest(release);
+          const response = await sendRequest(release);
+          if (response) logSaveResult(release.title, response, { testMode: TEST_MODE });
           processed++;
           await delay(800 + Math.random() * 900);
         } catch (err) {
@@ -182,19 +181,33 @@ exports.run = async function () {
         const hasImg = !!(card?.querySelector("img") || a.querySelector("img"));
         if (!hasSignal || !hasImg) continue;
 
+        const dateMatch = text.match(
+          /(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s*\d{4}/i
+        );
+        const priceMatch = text.match(/\$(\d{2,4}(?:,\d{3})?(?:\.\d{2})?)/);
+        const skuMatch = text.match(/(?:SKU|Style|Style Code|Product Code)\s*[:#]?\s*([A-Z0-9-]{5,})/i);
+
         const heading = card?.querySelector("h1,h2,h3,[class*='title']");
         let title = (heading?.textContent || a.textContent || "").trim().replace(/\s+/g, " ");
         title = title.replace(
           /^(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s*\d{4}\s+at\s+\d{1,2}:\d{2}\s*[AP]M/i,
           ""
         ).trim();
-        if (title.length < 6) continue;
 
-        const dateMatch = text.match(
-          /(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s*\d{4}/i
-        );
-        const priceMatch = text.match(/\$(\d{2,4}(?:,\d{3})?(?:\.\d{2})?)/);
-        const skuMatch = text.match(/(?:SKU|Style|Style Code|Product Code)\s*[:#]?\s*([A-Z0-9-]{5,})/i);
+        // Most cards have no matching heading element — the product name only
+        // exists as plain text in the card, sandwiched between the "Upcoming
+        // <date>" prefix and the "$price • SKU" suffix (e.g. "UpcomingJuly 23,
+        // 2026Nike Mind 002 Camo Green$145 • HQ4308-300"). Strip those known
+        // pieces out to recover it rather than dropping the candidate.
+        if (title.length < 6) {
+          title = text
+            .replace(/^Upcoming/i, "")
+            .replace(dateMatch ? dateMatch[0] : "", "")
+            .replace(priceMatch ? new RegExp(`\\$${priceMatch[1]}.*$`) : "", "")
+            .trim();
+        }
+
+        if (title.length < 6) continue;
 
         let image = "";
         const img = card?.querySelector("img") || a.querySelector("img");
@@ -287,12 +300,6 @@ exports.run = async function () {
 
     release.hash = md5(url);
 
-    console.log(`  📋 Title: ${release.title}`);
-    console.log(`  💰 Price: ${release.price || ""}`);
-    console.log(`  📅 Date: ${release.releaseDate || ""}`);
-    console.log(`  🏷️  SKU: ${release.sku || ""}`);
-    console.log(`  🖼️  Image: ${release.images ? release.images.substring(0, 80) + "..." : ""}`);
-
     return release;
   };
 
@@ -311,16 +318,7 @@ exports.run = async function () {
         type: release.type,
       };
 
-      console.log("  📋 Payload preview:");
-      console.log(`  - title: ${payload.title}`);
-      console.log(`  - url: ${payload.url}`);
-      console.log(`  - releaseDate: ${payload.releaseDate}`);
-      console.log(`  - price: ${payload.price}`);
-      console.log(`  - images: ${payload.images}`);
-
       if (TEST_MODE) {
-        const body = querystring.stringify(payload);
-        console.log(`  🧪 TEST MODE body (${body.length} chars): ${body.substring(0, 500)}${body.length > 500 ? "..." : ""}`);
         return { status: 200, statusText: "OK (TEST MODE)" };
       }
 
@@ -336,13 +334,10 @@ exports.run = async function () {
         },
         timeout: 30000,
       };
-      console.log(`  🌐 POST URL: ${postUrl}`);
-      console.log(`  🧾 x-www-form-urlencoded body (${body.length} chars): ${body.substring(0, 500)}${body.length > 500 ? "..." : ""}`);
       const res = await axios.post(postUrl, body, config);
-      console.log(`  ✅ Server response: ${res.status} ${res.statusText}`);
       return res;
     } catch (err) {
-      console.error(`  ❌ Error sending request: ${err.message}`);
+      console.log(`❌ ${release.title} — request failed: ${err.message}`);
       if (err.response) {
         console.error(`    Status: ${err.response.status} ${err.response.statusText}`);
         console.error("    Data:", err.response.data);
