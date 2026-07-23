@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { ArticleRecord } from "@/lib/dbArticles";
-import { getDbArticles } from "@/lib/dbArticles";
+import { getDbArticleCount, getDbArticles } from "@/lib/dbArticles";
 import { buildMetadata, siteName, siteUrl } from "@/lib/siteData";
 
 export const metadata: Metadata = buildMetadata({
@@ -13,18 +13,44 @@ export const metadata: Metadata = buildMetadata({
 
 export const dynamic = "force-dynamic";
 
-export default async function ArticlesPage() {
-  const articles = await getDbArticles();
-  const [lead, ...rest] = articles;
-  const secondary = rest.slice(0, 4);
-  const feed = rest.slice(4);
-  const categories = getCategories(articles);
+const PAGE_SIZE = 15;
+// The featured mosaic (lead + 4 secondary) only renders on page 1 and eats
+// into that page's budget, so page 1's feed offset has to account for it.
+const MOSAIC_SIZE = 5;
+
+type ArticlesPageProps = {
+  searchParams: Promise<{ page?: string }>;
+};
+
+export default async function ArticlesPage({ searchParams }: ArticlesPageProps) {
+  const { page: pageParam } = await searchParams;
+  const page = Math.max(1, Number(pageParam) || 1);
+  const isFirstPage = page === 1;
+
+  const feedOffset = isFirstPage ? MOSAIC_SIZE : MOSAIC_SIZE + (page - 1) * PAGE_SIZE;
+  const fetchLimit = isFirstPage ? MOSAIC_SIZE + PAGE_SIZE : PAGE_SIZE;
+  const fetchOffset = isFirstPage ? 0 : feedOffset;
+
+  const [pageArticles, totalCount, categorySample] = await Promise.all([
+    getDbArticles(fetchLimit, fetchOffset),
+    getDbArticleCount(),
+    // Sampled separately from the current page so "Sections" in the sidebar
+    // reflects the whole site rather than jumping around as you paginate.
+    getDbArticles(120),
+  ]);
+
+  const lead = isFirstPage ? pageArticles[0] : undefined;
+  const secondary = isFirstPage ? pageArticles.slice(1, MOSAIC_SIZE) : [];
+  const feed = isFirstPage ? pageArticles.slice(MOSAIC_SIZE) : pageArticles;
+
+  const totalPages = Math.max(1, Math.ceil((totalCount - MOSAIC_SIZE) / PAGE_SIZE) + 1);
+  const categories = getCategories(categorySample);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Blog",
     name: `${siteName} Sneaker Stories`,
     url: `${siteUrl}/articles`,
-    blogPost: articles.map((article) => ({
+    blogPost: pageArticles.map((article) => ({
       "@type": "BlogPosting",
       headline: article.title,
       description: article.deck,
@@ -126,8 +152,26 @@ export default async function ArticlesPage() {
               </article>
             ))}
           </div>
-          {!articles.length ? (
+          {!pageArticles.length ? (
             <p className="ed-deck">No stories published yet.</p>
+          ) : null}
+
+          {totalPages > 1 ? (
+            <nav className="ed-pagination" aria-label="Stories pagination">
+              {page > 1 ? (
+                <Link href={page === 2 ? "/articles" : `/articles?page=${page - 1}`}>← Newer</Link>
+              ) : (
+                <span aria-hidden="true">← Newer</span>
+              )}
+              <span className="ed-pagination__status">
+                Page {page} of {totalPages}
+              </span>
+              {page < totalPages ? (
+                <Link href={`/articles?page=${page + 1}`}>Older →</Link>
+              ) : (
+                <span aria-hidden="true">Older →</span>
+              )}
+            </nav>
           ) : null}
         </section>
 

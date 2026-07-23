@@ -142,7 +142,7 @@ type ScoreboardResponse = {
 
 export async function getEspnScoreboard(
   slug: string,
-  { revalidate = 300 }: { revalidate?: number } = {},
+  { revalidate = 30 }: { revalidate?: number } = {},
 ): Promise<EspnGame[]> {
   const league = getEspnLeague(slug);
   const url = `https://site.api.espn.com/apis/site/v2/sports/${league.sport}/${league.slug}/scoreboard`;

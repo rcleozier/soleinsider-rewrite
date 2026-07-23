@@ -65,10 +65,19 @@ function searchTermsForSubject(subject: string) {
   }
 
   // Authentication/lifestyle subjects are already literal product names
-  // ("Air Jordan 4", "Nike Dunk Low"); sports subjects fall back to surname.
-  const surname = subject.trim().split(/\s+/).pop() || subject;
+  // ("Air Jordan 4", "Nike Dunk Low"). Sports subjects vary by which name a
+  // signature line actually uses — usually the surname ("Curry", "Kyrie" is
+  // itself a first name used as the line name), but sometimes the first name
+  // (Nike's "Giannis Immortality" line uses his first name, not "Antetokounmpo").
+  // Try every word, longest first, to prefer the more distinctive one and
+  // skip anything too short/common to search safely (e.g. "Ja" from "Ja Morant").
+  const words = subject
+    .trim()
+    .split(/\s+/)
+    .filter((word) => word.length >= 3)
+    .sort((a, b) => b.length - a.length);
 
-  return [subject, surname];
+  return [subject, ...words];
 }
 
 /** Pexels (free, instant API key) — used only when we have no real product photo to reuse. */
