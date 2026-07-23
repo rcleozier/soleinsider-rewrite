@@ -50,6 +50,6 @@ export async function GET(_request: Request, { params }: RouteProps) {
       signatureAthleteCount: sneakers.signatureAthletes.length,
       gameDayReleaseCount: sneakers.releasingOnGameDay.length,
     },
-    120,
+    30,
   );
 }
