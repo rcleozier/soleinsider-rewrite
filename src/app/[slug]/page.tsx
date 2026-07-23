@@ -1,34 +1,36 @@
 import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ReleaseCard } from "@/components/ReleaseCard";
-import { getDbReleaseDatesUnformatted } from "@/lib/dbMobileApi";
-import type { LegacyRelease } from "@/lib/legacyMobileApi";
+import type { ArchiveReleaseFilter } from "@/lib/dbReleases";
+import { getDbArchiveReleaseCount, getDbArchiveReleases } from "@/lib/dbReleases";
 import {
   buildMetadata,
+  formatReleaseDate,
   getAbsoluteReleaseUrl,
   getBrandReleasePage,
   getReleaseArchivePage,
+  getReleaseImage,
+  getReleaseUrl,
   siteName,
   siteUrl,
 } from "@/lib/siteData";
 
+const PAGE_SIZE = 30;
+
 type ArchivePageProps = {
-  params: Promise<{
-    slug: string;
-  }>;
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ page?: string }>;
 };
 
 type ArchiveDefinition = {
   title: string;
   description: string;
   path: string;
-  type: string;
-  matcher?: (release: LegacyRelease) => boolean;
+  filter: ArchiveReleaseFilter;
 };
 
-export async function generateMetadata({
-  params,
-}: ArchivePageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: ArchivePageProps): Promise<Metadata> {
   const { slug } = await params;
   const definition = getArchiveDefinition(slug);
 
@@ -43,16 +45,27 @@ export async function generateMetadata({
   });
 }
 
-export default async function ArchivePage({ params }: ArchivePageProps) {
+export const dynamic = "force-dynamic";
+
+export default async function ArchivePage({ params, searchParams }: ArchivePageProps) {
   const { slug } = await params;
+  const { page: pageParam } = await searchParams;
   const definition = getArchiveDefinition(slug);
 
   if (!definition) {
     notFound();
   }
 
-  const allReleases = await getDbReleaseDatesUnformatted(definition.type, 240);
-  const releases = definition.matcher ? allReleases.filter(definition.matcher) : allReleases;
+  const page = Math.max(1, Number(pageParam) || 1);
+  const offset = (page - 1) * PAGE_SIZE;
+
+  const [releases, totalCount] = await Promise.all([
+    getDbArchiveReleases(definition.filter, PAGE_SIZE, offset),
+    getDbArchiveReleaseCount(definition.filter),
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
@@ -60,9 +73,9 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
     url: `${siteUrl}${definition.path}`,
     mainEntity: {
       "@type": "ItemList",
-      itemListElement: releases.slice(0, 60).map((release, index) => ({
+      itemListElement: releases.map((release, index) => ({
         "@type": "ListItem",
-        position: index + 1,
+        position: offset + index + 1,
         name: release.name,
         url: getAbsoluteReleaseUrl(release),
       })),
@@ -70,32 +83,67 @@ export default async function ArchivePage({ params }: ArchivePageProps) {
   };
 
   return (
-    <main>
+    <main className="editorial-home">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <section className="subpage-hero">
-        <p className="kicker">Release archive</p>
-        <h1>{definition.title}</h1>
-        <p>{definition.description}</p>
-      </section>
 
-      <section className="content-band">
+      <header className="ed-masthead">
+        <p className="ed-cat">Release archive</p>
+        <h1>{definition.title}</h1>
+        <p className="ed-deck">{definition.description}</p>
+      </header>
+
+      <div className="cal-list">
         {releases.length ? (
-          <div className="release-grid">
+          <ol className="cal-rows search-results">
             {releases.map((release) => (
-              <ReleaseCard key={release.id} release={release} />
+              <li key={release.product_id}>
+                <Link className="cal-row__media" href={getReleaseUrl(release)}>
+                  <Image src={getReleaseImage(release)} alt="" width={160} height={160} sizes="120px" />
+                </Link>
+                <div className="cal-row__body">
+                  <p className="ed-cat">{formatProductType(release.type)}</p>
+                  <h2>
+                    <Link href={getReleaseUrl(release)}>{release.name}</Link>
+                  </h2>
+                  <p className="cal-row__meta">
+                    {formatReleaseDate(release)} · SKU {release.sku || "TBA"}
+                  </p>
+                </div>
+                <span className="cal-row__price">{formatPrice(release.price)}</span>
+              </li>
             ))}
-          </div>
+          </ol>
         ) : (
-          <div className="homepage-empty">
-            <p className="kicker">Archive</p>
+          <section className="search-empty">
             <h2>No releases found.</h2>
-            <p>This archive exists locally, but no matching database records were found.</p>
-          </div>
+            <p className="ed-deck">This archive exists locally, but no matching database records were found.</p>
+            <Link className="ed-more" href="/calendar">
+              Open the calendar
+            </Link>
+          </section>
         )}
-      </section>
+
+        {totalPages > 1 ? (
+          <nav className="ed-pagination" aria-label="Archive pagination">
+            {page > 1 ? (
+              <Link href={page === 2 ? `/${slug}` : `/${slug}?page=${page - 1}`}>← Newer</Link>
+            ) : (
+              <span aria-hidden="true">← Newer</span>
+            )}
+            <span className="ed-pagination__status">
+              Page {page} of {totalPages}
+            </span>
+            {page < totalPages ? (
+              <Link href={`/${slug}?page=${page + 1}`}>Older →</Link>
+            ) : (
+              <span aria-hidden="true">Older →</span>
+            )}
+          </nav>
+        ) : null}
+      </div>
     </main>
   );
 }
@@ -108,8 +156,7 @@ function getArchiveDefinition(slug: string): ArchiveDefinition | null {
       title: brandPage.title,
       description: brandPage.description,
       path: `/${brandPage.slug}`,
-      type: "sneakers",
-      matcher: brandPage.matcher,
+      filter: { type: "sneakers", namePatterns: brandPage.namePatterns },
     };
   }
 
@@ -120,19 +167,40 @@ function getArchiveDefinition(slug: string): ArchiveDefinition | null {
       title: archivePage.title,
       description: archivePage.description,
       path: `/${archivePage.slug}`,
-      type: archivePage.type,
+      filter: { type: archivePage.type },
     };
   }
 
   if (/^20\d{2}$/.test(slug)) {
+    const year = Number(slug);
+
     return {
       title: `${slug} Sneaker Release Dates`,
       description: `Browse SoleInsider sneaker releases from ${slug}, including release dates, retail prices, SKUs, and product details.`,
       path: `/${slug}`,
-      type: "sneakers",
-      matcher: (release) => release.release_date_calendar.startsWith(`${slug},`),
+      filter: { type: "sneakers", year },
     };
   }
 
   return null;
+}
+
+function formatProductType(type: string) {
+  const trimmed = type.trim();
+
+  if (!trimmed) {
+    return "Release";
+  }
+
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}
+
+function formatPrice(price: string) {
+  const value = price.trim();
+
+  if (!value || value === "0") {
+    return "TBA";
+  }
+
+  return value.startsWith("$") ? value : `$${value}`;
 }

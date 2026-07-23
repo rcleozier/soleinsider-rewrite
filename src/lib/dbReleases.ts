@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { LegacyRelease } from "@/lib/legacyMobileApi";
 import { getProductImageUrl } from "@/lib/productImages";
@@ -345,6 +346,97 @@ export async function getDbReleasesByPatterns(patterns: string[], limit = 200) {
   } catch (error) {
     console.warn("Unable to read DB releases by brand pattern.", error);
     return [];
+  }
+}
+
+export type ArchiveReleaseFilter = {
+  type: string;
+  namePatterns?: string[];
+  year?: number;
+};
+
+function buildArchiveWhere(filter: ArchiveReleaseFilter) {
+  const conditions = [Prisma.sql`p.type = ${filter.type}`];
+
+  if (filter.namePatterns?.length) {
+    const likePatterns = filter.namePatterns.map((pattern) => `%${pattern}%`);
+    conditions.push(Prisma.sql`p.name ILIKE ANY(${likePatterns})`);
+  }
+
+  if (filter.year) {
+    conditions.push(Prisma.sql`EXTRACT(YEAR FROM r.release_date) = ${filter.year}`);
+  }
+
+  return Prisma.join(conditions, " AND ");
+}
+
+/** Newest-first, paginated — the archive/brand/category pages (/[slug]) use this instead of dumping everything at once. */
+export async function getDbArchiveReleases(filter: ArchiveReleaseFilter, limit: number, offset: number) {
+  try {
+    const rows = await prisma.$queryRaw<DbReleaseRow[]>`
+      SELECT
+        p.id,
+        p.name,
+        p.description,
+        p.content,
+        p.sku,
+        p.image,
+        p.link,
+        p.slug,
+        p.price,
+        p.views,
+        p.type,
+        p.stockx_highest_bid,
+        p.stockx_total_dollars,
+        p.stockx_lowest_ask,
+        p.stockx_last_sale,
+        p.stockx_deadstock_sold,
+        p.stockx_sales_last_72,
+        r.release_date AS release_date_raw,
+        p.created_at,
+        p.id AS product_id,
+        COALESCE(yes_votes.yes_votes, 0) AS yes_votes,
+        COALESCE(no_votes.no_votes, 0) AS no_votes
+      FROM products p
+      INNER JOIN releases r ON r.product_id = p.id
+      LEFT JOIN (
+        SELECT product_id, COUNT(status) AS yes_votes
+        FROM release_interest
+        WHERE status = 1
+        GROUP BY product_id
+      ) yes_votes ON yes_votes.product_id = p.id
+      LEFT JOIN (
+        SELECT product_id, COUNT(status) AS no_votes
+        FROM release_interest
+        WHERE status = 0
+        GROUP BY product_id
+      ) no_votes ON no_votes.product_id = p.id
+      WHERE ${buildArchiveWhere(filter)}
+      ORDER BY r.release_date DESC, p.id DESC
+      LIMIT ${Math.max(1, Math.min(limit, 60))}
+      OFFSET ${Math.max(0, offset)}
+    `;
+
+    return rows.map(mapDbReleaseToLegacyRelease);
+  } catch (error) {
+    console.warn("Unable to read DB archive releases.", error);
+    return [];
+  }
+}
+
+export async function getDbArchiveReleaseCount(filter: ArchiveReleaseFilter) {
+  try {
+    const [row] = await prisma.$queryRaw<{ count: bigint }[]>`
+      SELECT COUNT(*) AS count
+      FROM products p
+      INNER JOIN releases r ON r.product_id = p.id
+      WHERE ${buildArchiveWhere(filter)}
+    `;
+
+    return Number(row?.count ?? 0);
+  } catch (error) {
+    console.warn("Unable to count DB archive releases.", error);
+    return 0;
   }
 }
 

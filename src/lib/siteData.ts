@@ -78,7 +78,7 @@ export const brandReleasePages = [
   {
     slug: "air-jordan-releases",
     label: "Air Jordan",
-    matcher: (release: LegacyRelease) => getBrandName(release) === "Jordan",
+    namePatterns: ["jordan"],
     title: "Air Jordan Releases",
     description:
       "Upcoming Air Jordan release dates, retail prices, style codes, and launch details.",
@@ -86,7 +86,7 @@ export const brandReleasePages = [
   {
     slug: "nike-releases",
     label: "Nike",
-    matcher: (release: LegacyRelease) => getBrandName(release) === "Nike",
+    namePatterns: ["nike"],
     title: "Nike Releases",
     description:
       "Upcoming Nike sneaker release dates, retail prices, style codes, and launch details.",
@@ -94,7 +94,7 @@ export const brandReleasePages = [
   {
     slug: "adidas-releases",
     label: "adidas",
-    matcher: (release: LegacyRelease) => getBrandName(release) === "adidas",
+    namePatterns: ["adidas"],
     title: "Adidas Releases",
     description:
       "Upcoming adidas release dates, retail prices, style codes, and launch details.",
@@ -102,7 +102,7 @@ export const brandReleasePages = [
   {
     slug: "yeezy-releases",
     label: "Yeezy",
-    matcher: (release: LegacyRelease) => getBrandName(release) === "Yeezy",
+    namePatterns: ["yeezy"],
     title: "Yeezy Releases",
     description:
       "Upcoming Yeezy release dates, retail prices, style codes, and launch details.",
@@ -110,7 +110,7 @@ export const brandReleasePages = [
   {
     slug: "new-balance-releases",
     label: "New Balance",
-    matcher: (release: LegacyRelease) => getBrandName(release) === "New Balance",
+    namePatterns: ["new balance"],
     title: "New Balance Releases",
     description:
       "Upcoming New Balance release dates, retail prices, style codes, and launch details.",
@@ -118,7 +118,7 @@ export const brandReleasePages = [
   {
     slug: "puma-releases",
     label: "Puma",
-    matcher: (release: LegacyRelease) => getBrandName(release) === "Puma",
+    namePatterns: ["puma"],
     title: "Puma Releases",
     description:
       "Upcoming Puma release dates, retail prices, style codes, and launch details.",
@@ -126,7 +126,7 @@ export const brandReleasePages = [
   {
     slug: "asics-releases",
     label: "ASICS",
-    matcher: (release: LegacyRelease) => getBrandName(release) === "ASICS",
+    namePatterns: ["asics"],
     title: "ASICS Releases",
     description:
       "Upcoming ASICS release dates, retail prices, style codes, and launch details.",
@@ -134,7 +134,7 @@ export const brandReleasePages = [
   {
     slug: "off-white-releases",
     label: "Off-White",
-    matcher: (release: LegacyRelease) => getBrandName(release) === "Off-White",
+    namePatterns: ["off-white", "off white"],
     title: "Off-White Releases",
     description:
       "Upcoming Off-White release dates, retail prices, style codes, and launch details.",
@@ -142,7 +142,7 @@ export const brandReleasePages = [
 ] satisfies {
   slug: string;
   label: string;
-  matcher: (release: LegacyRelease) => boolean;
+  namePatterns: string[];
   title: string;
   description: string;
 }[];
