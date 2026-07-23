@@ -2803,7 +2803,8 @@ h2,
   gap: 16px;
 }
 
-.release-actions .vote-actions {
+.release-actions .vote-actions,
+.release-actions .favorite-button {
   margin-top: 0;
 }
 

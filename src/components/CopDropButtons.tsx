@@ -81,12 +81,12 @@ export function CopDropButtons({
       <div className="vote-actions__buttons">
         <button className="vote-actions__cop" onClick={() => submitVote("1")} type="button">
           <span aria-hidden="true">▲</span>
-          {shouldShowPercentages ? `COP · ${percentages.yes}%` : "COP"}
+          {shouldShowPercentages ? `COP · ${percentages.yes}` : "COP"}
           {totalVotes > 0 ? <strong className="vote-actions__cop-strong">{votes.yes}</strong> : null}
         </button>
         <button className="vote-actions__drop" onClick={() => submitVote("0")} type="button">
           <span aria-hidden="true">▼</span>
-          {shouldShowPercentages ? `DROP · ${percentages.no}%` : "DROP"}
+          {shouldShowPercentages ? `DROP · ${percentages.no}` : "DROP"}
           {totalVotes > 0 ? <strong className="vote-actions__drop-strong">{votes.no}</strong> : null}
         </button>
       </div>
@@ -100,12 +100,25 @@ export function CopDropButtons({
   );
 }
 
+function formatPercent(count: number, total: number) {
+  if (!total) {
+    return "0%";
+  }
+
+  const pct = (count / total) * 100;
+
+  if (pct > 0 && pct < 1) {
+    return "<1%";
+  }
+
+  return `${Math.round(pct)}%`;
+}
+
 function getPercentages(yesVotes: number, noVotes: number) {
   const total = yesVotes + noVotes;
-  const yes = total ? Math.round((yesVotes / total) * 100) : 0;
 
   return {
-    yes,
-    no: total ? 100 - yes : 0,
+    yes: formatPercent(yesVotes, total),
+    no: formatPercent(noVotes, total),
   };
 }

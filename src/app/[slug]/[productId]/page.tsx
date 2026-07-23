@@ -25,6 +25,8 @@ export async function generateStaticParams() {
   return [];
 }
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({
   params,
 }: LegacyReleasePageProps): Promise<Metadata> {
