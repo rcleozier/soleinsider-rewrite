@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import { SessionProviderWrapper } from "@/components/SessionProviderWrapper";
-import { SiteFooter } from "@/components/SiteFooter";
-import { SiteHeader } from "@/components/SiteHeader";
+import { SiteChrome } from "@/components/SiteChrome";
 import "./globals.css";
 
 // Fraunces carries the editorial display voice; Inter handles UI and body copy.
@@ -49,9 +48,7 @@ export default function RootLayout({
     >
       <body>
         <SessionProviderWrapper>
-          <SiteHeader />
-          {children}
-          <SiteFooter />
+          <SiteChrome>{children}</SiteChrome>
         </SessionProviderWrapper>
       </body>
     </html>

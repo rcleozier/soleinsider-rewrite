@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/adminAuth";
 import type { CreateReleaseResult } from "@/lib/adminReleaseTypes";
 import { isS3Configured, uploadProductImageToS3 } from "@/lib/s3";
 
@@ -14,6 +15,8 @@ export async function createRelease(
   _prevState: CreateReleaseResult | null,
   formData: FormData,
 ): Promise<CreateReleaseResult> {
+  await requireAdmin();
+
   const name = stringField(formData, "name");
   const sku = stringField(formData, "sku");
   const priceRaw = stringField(formData, "price");

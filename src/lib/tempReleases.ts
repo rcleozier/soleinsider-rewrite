@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/adminAuth";
 import { getProductImageUrl } from "@/lib/productImages";
 
 export type TempReleaseStatusFilter = "all" | "pending" | "approved";
@@ -48,6 +49,8 @@ export async function getTempReleaseImages(id: number) {
 export async function approveTempRelease(formData: FormData) {
   "use server";
 
+  await requireAdmin();
+
   const id = Number(formData.get("id"));
 
   if (!Number.isFinite(id)) {
@@ -60,6 +63,8 @@ export async function approveTempRelease(formData: FormData) {
 
 export async function rejectTempRelease(formData: FormData) {
   "use server";
+
+  await requireAdmin();
 
   const id = Number(formData.get("id"));
 
@@ -82,6 +87,8 @@ function redirectTarget(formData: FormData, id: number) {
 
 export async function deleteTempRelease(formData: FormData) {
   "use server";
+
+  await requireAdmin();
 
   const id = Number(formData.get("id"));
 
