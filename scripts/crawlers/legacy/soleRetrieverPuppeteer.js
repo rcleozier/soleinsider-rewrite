@@ -278,18 +278,52 @@ exports.run = async function () {
     const skuMatch = bodyText.match(/(?:SKU|Style|Style Code|Product Code)\s*[:#]?\s*([A-Z0-9-]{5,})/i);
     if (skuMatch) release.sku = skuMatch[1].toUpperCase();
 
-    const contentBlock = $(".description, [class*='description'], [data-testid*='description'], article, main").first().text().trim();
-    if (contentBlock && contentBlock.length > 60) release.content = contentBlock.replace(/\s+/g, " ").trim();
+    // Try selectors in order of specificity; `main`/`article` alone are too
+    // broad on this site (they pull in nav, search bar, and JSON-LD <script>
+    // text since cheerio's .text() walks every descendant text node).
+    const contentSelectors = [
+      ".description",
+      "[class*='description']",
+      "[data-testid*='description']",
+      "article",
+    ];
 
-    let img = $("meta[property='og:image']").attr("content") || $("meta[name='twitter:image']").attr("content") || "";
+    let contentBlock = "";
+    for (const selector of contentSelectors) {
+      const el = $(selector).first();
+      if (!el.length) continue;
+
+      const text = el.clone().find("script, style, nav, header, footer").remove().end().text().trim();
+
+      if (text && text.length > 60 && text.length < 4000 && !text.startsWith("{")) {
+        contentBlock = text;
+        break;
+      }
+    }
+
+    if (contentBlock) release.content = contentBlock.replace(/\s+/g, " ").trim();
+
+    // Prefer an actual product image over og:image/twitter:image — those
+    // metadata tags always point at Sole Retriever's blog header image
+    // (images.soleretriever.com/blog/...), which has the site logo and
+    // "SOLE RETRIEVER" wordmark burned into the picture.
+    let img = $("img")
+      .filter((_, el) => {
+        const src = $(el).attr("src") || "";
+        return (
+          /\.(png|jpe?g|webp)(\?|$)/i.test(src) &&
+          !/logo|sprite|icon|\/blog\//i.test(src)
+        );
+      })
+      .first()
+      .attr("src");
+
     if (!img) {
-      img = $("img")
-        .filter((_, el) => {
-          const src = $(el).attr("src") || "";
-          return /\.(png|jpe?g|webp)(\?|$)/i.test(src) && !/logo|sprite|icon/i.test(src);
-        })
-        .first()
-        .attr("src");
+      const metaImg =
+        $("meta[property='og:image']").attr("content") ||
+        $("meta[name='twitter:image']").attr("content") ||
+        "";
+      if (metaImg && !/\/blog\//i.test(metaImg)) img = metaImg;
     }
     if (img) {
       if (img.startsWith("//")) img = "https:" + img;

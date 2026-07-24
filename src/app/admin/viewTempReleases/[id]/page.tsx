@@ -5,10 +5,12 @@ import { getProductImageUrl } from "@/lib/productImages";
 import { cleanHtmlContent } from "@/lib/siteData";
 import {
   approveTempRelease,
+  deleteTempRelease,
   formatTempDate,
   formatTempPrice,
   getTempRelease,
   getTempReleaseImages,
+  rejectTempRelease,
 } from "@/lib/tempReleases";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +35,7 @@ export default async function TempReleaseDetailPage({ params }: TempReleasePageP
   }
 
   const isApproved = release.status === "approved";
+  const isRejected = release.status === "rejected";
   const primaryImage =
     getProductImageUrl(release.image || images[0]?.image);
 
@@ -45,8 +48,8 @@ export default async function TempReleaseDetailPage({ params }: TempReleasePageP
       <section className="admin-temp-detail">
         <div className="admin-temp-detail__media">
           <Image src={primaryImage} alt="" fill sizes="(max-width: 900px) 100vw, 42vw" />
-          <span className={isApproved ? "is-approved" : ""}>
-            {isApproved ? "Approved" : "Pending"}
+          <span className={isApproved ? "is-approved" : isRejected ? "is-rejected" : ""}>
+            {isApproved ? "Approved" : isRejected ? "Rejected" : "Pending"}
           </span>
         </div>
         <div className="admin-temp-detail__content">
@@ -71,12 +74,28 @@ export default async function TempReleaseDetailPage({ params }: TempReleasePageP
           </dl>
           {isApproved ? (
             <p className="admin-approved-note">This release has already been approved.</p>
+          ) : isRejected ? (
+            <p className="admin-approved-note">This release has been rejected.</p>
           ) : (
-            <form action={approveTempRelease}>
-              <input type="hidden" name="id" value={release.id} />
-              <button type="submit">Approve Release</button>
-            </form>
+            <div className="admin-temp-detail__actions">
+              <form action={approveTempRelease}>
+                <input type="hidden" name="id" value={release.id} />
+                <button type="submit">Approve Release</button>
+              </form>
+              <form action={rejectTempRelease}>
+                <input type="hidden" name="id" value={release.id} />
+                <button className="admin-button--reject" type="submit">
+                  Reject Release
+                </button>
+              </form>
+            </div>
           )}
+          <form action={deleteTempRelease}>
+            <input type="hidden" name="id" value={release.id} />
+            <button className="admin-button--delete" type="submit">
+              Delete Release
+            </button>
+          </form>
           <a href={release.link}>Source URL</a>
         </div>
       </section>

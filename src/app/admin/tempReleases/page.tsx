@@ -2,10 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { getProductImageUrl } from "@/lib/productImages";
 import {
+  approveTempRelease,
   formatTempDate,
   formatTempPrice,
   getTempReleaseCounts,
   getTempReleases,
+  rejectTempRelease,
   type TempReleaseStatusFilter,
 } from "@/lib/tempReleases";
 
@@ -75,8 +77,20 @@ export default async function TempReleasesPage({ searchParams }: TempReleasesPag
                   fill
                   sizes="(max-width: 800px) 100vw, 33vw"
                 />
-                <span className={release.status === "approved" ? "is-approved" : ""}>
-                  {release.status === "approved" ? "✓ Approved" : "Pending"}
+                <span
+                  className={
+                    release.status === "approved"
+                      ? "is-approved"
+                      : release.status === "rejected"
+                        ? "is-rejected"
+                        : ""
+                  }
+                >
+                  {release.status === "approved"
+                    ? "✓ Approved"
+                    : release.status === "rejected"
+                      ? "Rejected"
+                      : "Pending"}
                 </span>
               </div>
               <div className="admin-temp-card__body">
@@ -99,7 +113,31 @@ export default async function TempReleasesPage({ searchParams }: TempReleasesPag
                     <dd>{formatTempDate(release.releaseDate)}</dd>
                   </div>
                 </dl>
-                <Link href={`/admin/viewTempReleases/${release.id}`}>👁 View Details</Link>
+                {release.status !== "approved" && release.status !== "rejected" ? (
+                  <div className="admin-temp-card__quick-actions">
+                    <form action={approveTempRelease}>
+                      <input type="hidden" name="id" value={release.id} />
+                      <input
+                        type="hidden"
+                        name="redirectTo"
+                        value={`/admin/tempReleases${status !== "all" ? `?status=${status}` : ""}`}
+                      />
+                      <button type="submit">Approve</button>
+                    </form>
+                    <form action={rejectTempRelease}>
+                      <input type="hidden" name="id" value={release.id} />
+                      <input
+                        type="hidden"
+                        name="redirectTo"
+                        value={`/admin/tempReleases${status !== "all" ? `?status=${status}` : ""}`}
+                      />
+                      <button className="admin-button--reject" type="submit">
+                        Reject
+                      </button>
+                    </form>
+                  </div>
+                ) : null}
+                <Link href={`/admin/viewTempReleases/${release.id}`}>View Details</Link>
               </div>
             </article>
           ))}

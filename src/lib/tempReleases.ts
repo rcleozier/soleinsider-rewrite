@@ -9,7 +9,7 @@ export async function getTempReleases(
 ) {
   return prisma.tempProduct.findMany({
     where: status === "all" ? undefined : { status: statusToDbValue(status) },
-    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+    orderBy: [{ status: "asc" }, { id: "desc" }],
     take: limit,
   });
 }
@@ -28,8 +28,8 @@ function statusToDbValue(status: TempReleaseStatusFilter) {
     return "approved";
   }
 
-  // Legacy rows default to "new"; anything that isn't "approved" is pending.
-  return { not: "approved" };
+  // Legacy rows default to "new"; anything that isn't approved or rejected is pending.
+  return { notIn: ["approved", "rejected"] };
 }
 
 export async function getTempRelease(id: number) {
@@ -55,7 +55,46 @@ export async function approveTempRelease(formData: FormData) {
   }
 
   await promoteTempRelease(id);
-  redirect(`/admin/viewTempReleases/${id}`);
+  redirect(redirectTarget(formData, id));
+}
+
+export async function rejectTempRelease(formData: FormData) {
+  "use server";
+
+  const id = Number(formData.get("id"));
+
+  if (!Number.isFinite(id)) {
+    throw new Error("Invalid temp release id.");
+  }
+
+  await prisma.tempProduct.update({
+    where: { id },
+    data: { status: "rejected", updatedAt: new Date() },
+  });
+
+  redirect(redirectTarget(formData, id));
+}
+
+function redirectTarget(formData: FormData, id: number) {
+  const redirectTo = formData.get("redirectTo");
+  return typeof redirectTo === "string" && redirectTo ? redirectTo : `/admin/viewTempReleases/${id}`;
+}
+
+export async function deleteTempRelease(formData: FormData) {
+  "use server";
+
+  const id = Number(formData.get("id"));
+
+  if (!Number.isFinite(id)) {
+    throw new Error("Invalid temp release id.");
+  }
+
+  await prisma.$transaction([
+    prisma.tempProductImage.deleteMany({ where: { productId: id } }),
+    prisma.tempProduct.delete({ where: { id } }),
+  ]);
+
+  redirect("/admin/tempReleases");
 }
 
 export async function promoteTempRelease(id: number) {
