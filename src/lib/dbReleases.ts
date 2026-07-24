@@ -1,4 +1,3 @@
-import { unstable_cache } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { LegacyRelease } from "@/lib/legacyMobileApi";
@@ -108,13 +107,7 @@ export async function getDbSneakerReleasesDescending(limit = 120) {
   }
 }
 
-export const getDbSneakerReleasesRecentlyAdded = unstable_cache(
-  getDbSneakerReleasesRecentlyAddedUncached,
-  ["db-sneaker-releases-recently-added"],
-  { revalidate: 300 },
-);
-
-async function getDbSneakerReleasesRecentlyAddedUncached(limit = 120) {
+export async function getDbSneakerReleasesRecentlyAdded(limit = 120) {
   try {
     const rows = await prisma.$queryRaw<DbReleaseRow[]>`
       SELECT

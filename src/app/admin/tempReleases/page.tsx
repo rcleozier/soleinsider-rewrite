@@ -26,7 +26,7 @@ const statusTabs: { value: TempReleaseStatusFilter; label: string }[] = [
 export default async function TempReleasesPage({ searchParams }: TempReleasesPageProps) {
   const { status: statusParam } = await searchParams;
   const status: TempReleaseStatusFilter =
-    statusParam === "pending" || statusParam === "approved" ? statusParam : "all";
+    statusParam === "all" || statusParam === "approved" ? statusParam : "pending";
 
   const [releases, counts] = await Promise.all([
     getTempReleases({ status }),
@@ -56,7 +56,7 @@ export default async function TempReleasesPage({ searchParams }: TempReleasesPag
             {statusTabs.map((tab) => (
               <Link
                 aria-current={tab.value === status ? "page" : undefined}
-                href={tab.value === "all" ? "/admin/tempReleases" : `/admin/tempReleases?status=${tab.value}`}
+                href={tab.value === "pending" ? "/admin/tempReleases" : `/admin/tempReleases?status=${tab.value}`}
                 key={tab.value}
               >
                 {tab.label}
@@ -120,7 +120,7 @@ export default async function TempReleasesPage({ searchParams }: TempReleasesPag
                       <input
                         type="hidden"
                         name="redirectTo"
-                        value={`/admin/tempReleases${status !== "all" ? `?status=${status}` : ""}`}
+                        value={`/admin/tempReleases${status !== "pending" ? `?status=${status}` : ""}`}
                       />
                       <button type="submit">Approve</button>
                     </form>
@@ -129,7 +129,7 @@ export default async function TempReleasesPage({ searchParams }: TempReleasesPag
                       <input
                         type="hidden"
                         name="redirectTo"
-                        value={`/admin/tempReleases${status !== "all" ? `?status=${status}` : ""}`}
+                        value={`/admin/tempReleases${status !== "pending" ? `?status=${status}` : ""}`}
                       />
                       <button className="admin-button--reject" type="submit">
                         Reject

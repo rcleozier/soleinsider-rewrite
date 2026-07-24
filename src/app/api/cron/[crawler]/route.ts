@@ -10,6 +10,7 @@ const execFileAsync = promisify(execFile);
 const crawlers = {
   kith: "kithMondayProgram.js",
   "kith-monday-program": "kithMondayProgram.js",
+  "kith-footwear": "kithFootwear.js",
   supdrops: "supdrops.js",
   nicekicks: "niceKicks.js",
   soleretriever: "soleRetrieverPuppeteer.js",

@@ -18,6 +18,7 @@
     "db:setup": "prisma migrate deploy && node scripts/seed-legacy-postgres.mjs --reset",
     "crawl:all": "node scripts/run-crawler.mjs all",
     "crawl:kith": "node scripts/run-crawler.mjs kith",
+    "crawl:kith-footwear": "node scripts/run-crawler.mjs kith-footwear",
     "crawl:supdrops": "node scripts/run-crawler.mjs supdrops",
     "crawl:nicekicks": "node scripts/run-crawler.mjs nicekicks",
     "crawl:soleretriever": "node scripts/run-crawler.mjs soleretriever",

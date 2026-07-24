@@ -10,6 +10,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const source = process.argv[2] || "all";
 const crawlerFiles = {
   kith: "kithMondayProgram.js",
+  "kith-footwear": "kithFootwear.js",
   supdrops: "supdrops.js",
   nicekicks: "niceKicks.js",
   soleretriever: "soleRetrieverPuppeteer.js",
@@ -18,7 +19,7 @@ const crawlerFiles = {
 
 const selected =
   source === "all"
-    ? ["kith", "supdrops", "nicekicks", "soleretriever", "kicksonfire"]
+    ? ["kith", "kith-footwear", "supdrops", "nicekicks", "soleretriever", "kicksonfire"]
     : [source];
 
 for (const crawler of selected) {

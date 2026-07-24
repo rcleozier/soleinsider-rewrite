@@ -13,6 +13,7 @@ Legacy crawler scripts now live in `scripts/crawlers/legacy` and save normalized
 ## Cron Routes
 
 - `/api/cron/kith`
+- `/api/cron/kith-footwear`
 - `/api/cron/supdrops`
 - `/api/cron/nicekicks`
 - `/api/cron/soleretriever`
@@ -26,6 +27,7 @@ These commands expect the app ingest endpoint to be reachable. For local runs, s
 
 ```bash
 npm run crawl:kith
+npm run crawl:kith-footwear
 npm run crawl:supdrops
 npm run crawl:nicekicks
 npm run crawl:soleretriever
