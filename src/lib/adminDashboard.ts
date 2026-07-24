@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/adminAuth";
 import { getProductImageUrl } from "@/lib/productImages";
 
 export async function getAdminStats() {
@@ -88,4 +90,21 @@ export async function getRecentComments(limit = 8) {
       memberName: member?.name || member?.email || "Unknown member",
     };
   });
+}
+
+export async function deleteComment(formData: FormData) {
+  "use server";
+
+  await requireAdmin();
+
+  const id = Number(formData.get("id"));
+
+  if (!Number.isFinite(id)) {
+    throw new Error("Invalid comment id.");
+  }
+
+  await prisma.comment.delete({ where: { id } });
+
+  const redirectTo = formData.get("redirectTo");
+  redirect(typeof redirectTo === "string" && redirectTo ? redirectTo : "/admin");
 }

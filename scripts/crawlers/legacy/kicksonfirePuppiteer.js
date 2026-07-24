@@ -72,6 +72,13 @@ exports.run = function (url) {
 
     console.log(`Found ${releaseUrls.length} release URLs`);
 
+    // Detail pages are fetched on their own tab, never the listing `page`.
+    // Cloudflare occasionally re-challenges mid-crawl and tears down the
+    // navigating frame; reusing one page meant the first detach cascaded into
+    // "detached Frame" errors for every remaining item. A fresh page per
+    // failure isolates that so the crawl keeps going.
+    let detailPage = await createDetailPage(browser, headers);
+
     for (let i = 0; i < releaseUrls.length; i++) {
       const releaseUrl = releaseUrls[i];
       if (!releaseUrl) {
@@ -79,9 +86,15 @@ exports.run = function (url) {
       }
 
       try {
-        releaseInformation = await getReleaseInformation(releaseUrl, page);
+        releaseInformation = await getReleaseInformation(releaseUrl, detailPage);
       } catch (e) {
-        console.log("Error", e);
+        console.log(`⚠️  Detail fetch failed for ${releaseUrl}: ${e.message}`);
+        // A detached/crashed frame poisons the page for all later gotos —
+        // replace it before moving on.
+        if (/detached|Target closed|Session closed|crash/i.test(e.message)) {
+          try { await detailPage.close(); } catch (_) {}
+          detailPage = await createDetailPage(browser, headers);
+        }
         continue;
       }
 

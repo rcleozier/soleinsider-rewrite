@@ -102,9 +102,19 @@ exports.run = async function () {
           release.releaseDate = release.releaseDate || entry.releaseDate || "";
           release.price = release.price || entry.price || "";
           release.sku = release.sku || entry.sku || "";
-          release.images = release.images || cleanImageUrl(entry.image || "");
 
-          if (!release.images || /\.webp(?:$|\?)/i.test(release.images)) release.images = "";
+          // The listing card's own thumbnail is unique per release. The
+          // detail page's generic <img> scan isn't reliably scoped to the
+          // product — plenty of these pages are lightweight news posts whose
+          // only <img> match is a shared "featured drop" widget that's
+          // identical across every article, which silently overrode this
+          // with the same wrong photo on every item. Listing thumbnail wins;
+          // the detail-page guess is only a fallback when it's missing.
+          release.images = cleanImageUrl(entry.image || "") || release.images;
+
+          // The ingest pipeline re-encodes every image to WebP on save, and
+          // Sole Retriever's own product photos are natively served as
+          // .webp — rejecting that format here just discards real images.
 
           if (!release || isBadTitle(release.title) || !isValidReleaseDate(release.releaseDate) || !release.images) {
             console.log(`⏭️  ${entry.title} — skipped, failed validation (title/date/image)`);
@@ -328,8 +338,7 @@ exports.run = async function () {
     if (img) {
       if (img.startsWith("//")) img = "https:" + img;
       if (img.startsWith("/")) img = BASE_URL + img;
-      const cleaned = cleanImageUrl(img);
-      if (!/\.webp(?:$|\?)/i.test(cleaned)) release.images = cleaned;
+      release.images = cleanImageUrl(img);
     }
 
     release.hash = md5(url);

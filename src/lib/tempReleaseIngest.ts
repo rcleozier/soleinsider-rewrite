@@ -217,13 +217,16 @@ async function rehostImages(sourceUrls: string[]) {
 }
 
 function normalizeImages(value: string) {
+  // Note: do NOT filter out .webp source URLs here. Some sources (Sole
+  // Retriever) serve every product photo as .webp, and rehostImages
+  // re-encodes whatever we accept to WebP on S3 anyway — dropping webp
+  // sources just guarantees those releases save with no product image.
   return Array.from(
     new Set(
       value
         .split(",")
         .map((image) => image.trim())
         .filter((image) => /^https?:\/\//i.test(image))
-        .filter((image) => !/\.webp(?:$|\?)/i.test(image))
         .slice(0, 8),
     ),
   );

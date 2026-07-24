@@ -1,5 +1,13 @@
 /* eslint-disable */
-const puppeteer = require("puppeteer");
+// puppeteer-extra + stealth: several crawl targets (kicksonfire.com in
+// particular) sit behind Cloudflare's bot challenge, which fingerprints and
+// blocks plain headless Chrome (navigator.webdriver, missing GPU/canvas
+// signals, etc.) before it ever reaches the real page. The stealth plugin
+// patches those tells; plain puppeteer.launch() gets served a "Just a
+// moment..." challenge page instead of real HTML.
+const puppeteer = require("puppeteer-extra");
+const StealthPlugin = require("puppeteer-extra-plugin-stealth");
+puppeteer.use(StealthPlugin());
 
 let chromium = null;
 try {
