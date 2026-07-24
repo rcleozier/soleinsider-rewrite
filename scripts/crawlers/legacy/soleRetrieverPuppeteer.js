@@ -103,14 +103,12 @@ exports.run = async function () {
           release.price = release.price || entry.price || "";
           release.sku = release.sku || entry.sku || "";
 
-          // The listing card's own thumbnail is unique per release. The
-          // detail page's generic <img> scan isn't reliably scoped to the
-          // product — plenty of these pages are lightweight news posts whose
-          // only <img> match is a shared "featured drop" widget that's
-          // identical across every article, which silently overrode this
-          // with the same wrong photo on every item. Listing thumbnail wins;
-          // the detail-page guess is only a fallback when it's missing.
-          release.images = cleanImageUrl(entry.image || "") || release.images;
+          // Prefer the detail page's scoped `.embla` gallery (up to 6 photos
+          // for this product). Fall back to the listing card's single
+          // thumbnail only when the gallery came back empty.
+          if (!release.images) {
+            release.images = cleanImageUrl(entry.image || "");
+          }
 
           // The ingest pipeline re-encodes every image to WebP on save, and
           // Sole Retriever's own product photos are natively served as
@@ -296,19 +294,48 @@ exports.run = async function () {
     });
   };
 
-  // The product photo gallery (main image + the thumbnail strip beside it)
-  // lives inside the `.embla` carousel. Scoping to that container keeps out
-  // the "Restock"/related-product widgets lower on the page, which are
-  // different sneakers served from the same /sb/products/ CDN path.
-  const extractGalleryImages = async (page) => {
-    return page.evaluate(() => {
-      const gallery = document.querySelector(".embla");
-      const scope = gallery || document;
-
-      return Array.from(scope.querySelectorAll("img"))
-        .map((img) => img.getAttribute("src") || img.getAttribute("data-src") || "")
-        .filter((src) => /\/sb\/products\//.test(src));
+  // Most product photos live in a grid lower in the article body and are
+  // lazy-loaded — they don't exist in the DOM until scrolled into view.
+  const autoScrollDetail = async (page) => {
+    await page.evaluate(async () => {
+      let last = -1;
+      for (let i = 0; i < 40; i++) {
+        window.scrollBy(0, 600);
+        await new Promise((r) => setTimeout(r, 150));
+        const y = window.scrollY;
+        if (y === last) break; // reached the bottom
+        last = y;
+      }
+      window.scrollTo(0, 0);
     });
+    await delay(400);
+  };
+
+  // Real product photos are the top carousel image plus a grid of extra angles
+  // in the article body. Every one carries alt text that STARTS WITH the
+  // product name — the bare name for the hero, or "… - Lateral" / "… - Medial"
+  // / "… - Heel Detail" for the angles. Everything else on the page is for a
+  // different product or is chrome: related-news thumbnails, the author
+  // avatar, the branded header, and the "Similar Releases" strip. Note that
+  // "Similar Releases" is ALSO a /sb/products/ embla carousel, so we must NOT
+  // trust /sb/products/ or embla membership on their own — the startsWith test
+  // on the product name is the only thing that reliably isolates this
+  // release's photos (the hero image's alt is the bare product name, so it is
+  // covered too).
+  const extractGalleryImages = async (page, productName) => {
+    return page.evaluate((name) => {
+      const target = (name || "").trim().toLowerCase();
+      if (!target) return [];
+
+      const srcs = [];
+      for (const img of document.querySelectorAll("img")) {
+        const src = img.getAttribute("src") || img.getAttribute("data-src") || "";
+        if (!src) continue;
+        const alt = (img.getAttribute("alt") || "").trim().toLowerCase();
+        if (alt.startsWith(target)) srcs.push(src);
+      }
+      return srcs;
+    }, productName);
   };
 
   const getReleaseDetails = async (page, url, fallbackTitle = "") => {
@@ -316,7 +343,8 @@ exports.run = async function () {
     await delay(1200);
 
     const panel = await extractReleaseDetailsPanel(page);
-    const galleryImages = await extractGalleryImages(page);
+    await autoScrollDetail(page);
+    const galleryImages = await extractGalleryImages(page, panel?.product || fallbackTitle);
 
     const html = await page.content();
     const $ = cheerio.load(html);
@@ -391,33 +419,21 @@ exports.run = async function () {
 
     if (contentBlock) release.content = contentBlock.replace(/\s+/g, " ").trim();
 
-    // Prefer an actual product image over og:image/twitter:image — those
-    // metadata tags always point at Sole Retriever's blog header image
-    // (images.soleretriever.com/blog/...), which has the site logo and
-    // "SOLE RETRIEVER" wordmark burned into the picture.
-    let img = $("img")
-      .filter((_, el) => {
-        const src = $(el).attr("src") || "";
-        return (
-          /\.(png|jpe?g|webp)(\?|$)/i.test(src) &&
-          !/logo|sprite|icon|\/blog\//i.test(src)
-        );
-      })
-      .first()
-      .attr("src");
-
-    if (!img) {
-      const metaImg =
-        $("meta[property='og:image']").attr("content") ||
-        $("meta[name='twitter:image']").attr("content") ||
-        "";
-      if (metaImg && !/\/blog\//i.test(metaImg)) img = metaImg;
+    // Collect up to 6 gallery photos. The same image is served at several
+    // widths (?width=1600, 740, 392) — cleanImageUrl strips the query, so a
+    // Set collapses those duplicates to one entry per distinct photo.
+    const seenImages = new Set();
+    const collected = [];
+    for (let src of galleryImages) {
+      if (src.startsWith("//")) src = "https:" + src;
+      if (src.startsWith("/")) src = BASE_URL + src;
+      const cleaned = cleanImageUrl(src);
+      if (!cleaned || seenImages.has(cleaned)) continue;
+      seenImages.add(cleaned);
+      collected.push(cleaned);
+      if (collected.length >= 6) break;
     }
-    if (img) {
-      if (img.startsWith("//")) img = "https:" + img;
-      if (img.startsWith("/")) img = BASE_URL + img;
-      release.images = cleanImageUrl(img);
-    }
+    release.images = collected.join(",");
 
     release.hash = md5(url);
 
