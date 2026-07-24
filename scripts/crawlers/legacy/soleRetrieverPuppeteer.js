@@ -248,9 +248,76 @@ exports.run = async function () {
     return items;
   };
 
+  // The "Release details" sidebar is the real structured data (Product name,
+  // SKU, Colorway, Retail Price, Release Date) as label/value rows. The page
+  // <h1> is an editorial article headline ("Sue Bird's Nike Air Zoom Huarache
+  // 2K4 Will Finally be Released...") — never use it as the product name.
+  const extractReleaseDetailsPanel = async (page) => {
+    return page.evaluate(() => {
+      const all = Array.from(document.querySelectorAll("*"));
+      const heading = all.find(
+        (el) => /^release details$/i.test((el.textContent || "").trim()) && el.children.length === 0
+      );
+      if (!heading) return null;
+
+      let panel = heading;
+      for (let i = 0; i < 6; i++) {
+        if (panel.parentElement) panel = panel.parentElement;
+        const t = panel.textContent || "";
+        if (/Product/.test(t) && /SKU/.test(t) && /Colorway/.test(t)) break;
+      }
+
+      const leaves = [];
+      const walk = (el) => {
+        for (const child of el.childNodes) {
+          if (child.nodeType === 3) {
+            const t = child.textContent.trim();
+            if (t) leaves.push(t);
+          } else if (child.nodeType === 1) {
+            walk(child);
+          }
+        }
+      };
+      walk(panel);
+
+      // leaves are an ordered [label, value, label, value, ...] sequence.
+      const valueAfter = (label) => {
+        const idx = leaves.findIndex((l) => l.toLowerCase() === label.toLowerCase());
+        return idx >= 0 && idx + 1 < leaves.length ? leaves[idx + 1] : "";
+      };
+
+      return {
+        product: valueAfter("Product"),
+        releaseDate: valueAfter("Release Date"),
+        sku: valueAfter("SKU"),
+        colorway: valueAfter("Colorway"),
+        retailPrice: valueAfter("Retail Price"),
+      };
+    });
+  };
+
+  // The product photo gallery (main image + the thumbnail strip beside it)
+  // lives inside the `.embla` carousel. Scoping to that container keeps out
+  // the "Restock"/related-product widgets lower on the page, which are
+  // different sneakers served from the same /sb/products/ CDN path.
+  const extractGalleryImages = async (page) => {
+    return page.evaluate(() => {
+      const gallery = document.querySelector(".embla");
+      const scope = gallery || document;
+
+      return Array.from(scope.querySelectorAll("img"))
+        .map((img) => img.getAttribute("src") || img.getAttribute("data-src") || "")
+        .filter((src) => /\/sb\/products\//.test(src));
+    });
+  };
+
   const getReleaseDetails = async (page, url, fallbackTitle = "") => {
     await page.goto(url, { waitUntil: "networkidle2", timeout: 45000 });
     await delay(1200);
+
+    const panel = await extractReleaseDetailsPanel(page);
+    const galleryImages = await extractGalleryImages(page);
+
     const html = await page.content();
     const $ = cheerio.load(html);
 
@@ -267,26 +334,37 @@ exports.run = async function () {
       title: "",
     };
 
-    let title =
-      $("h1, [data-testid*='title'], [class*='title']").first().text().trim() ||
-      fallbackTitle ||
-      $("title").text().trim();
-    if (title) release.title = title.replace(/\s+\|\s*Sole Retriever.*/i, "").replace(/\s+/g, " ").trim();
+    // Prefer the sidebar's "Product" field; fall back to the listing card
+    // title, never the article <h1>.
+    if (panel?.product) {
+      release.title = panel.product.replace(/\s+/g, " ").trim();
+    } else if (fallbackTitle) {
+      release.title = fallbackTitle.replace(/\s+/g, " ").trim();
+    }
+
+    if (panel?.colorway) release.color = panel.colorway.replace(/\s+/g, " ").trim();
 
     const bodyText = $("body").text();
-    const priceMatch = bodyText.match(/\$(\d{2,4}(?:,\d{3})?(?:\.\d{2})?)/);
-    if (priceMatch) {
-      const p = parseFloat(priceMatch[1].replace(/,/g, ""));
+
+    const panelPrice = panel?.retailPrice ? panel.retailPrice.match(/(\d{2,4}(?:\.\d{2})?)/) : null;
+    if (panelPrice) {
+      const p = parseFloat(panelPrice[1]);
       if (!isNaN(p) && p > 10) release.price = p.toFixed(2);
     }
 
-    const namedMonth = bodyText.match(
-      /(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s*\d{4}/i
-    );
-    if (namedMonth) release.releaseDate = namedMonth[0];
+    if (panel?.releaseDate) release.releaseDate = panel.releaseDate.trim();
+    else {
+      const namedMonth = bodyText.match(
+        /(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s*\d{4}/i
+      );
+      if (namedMonth) release.releaseDate = namedMonth[0];
+    }
 
-    const skuMatch = bodyText.match(/(?:SKU|Style|Style Code|Product Code)\s*[:#]?\s*([A-Z0-9-]{5,})/i);
-    if (skuMatch) release.sku = skuMatch[1].toUpperCase();
+    if (panel?.sku) release.sku = panel.sku.toUpperCase().trim();
+    else {
+      const skuMatch = bodyText.match(/(?:SKU|Style|Style Code|Product Code)\s*[:#]?\s*([A-Z0-9-]{5,})/i);
+      if (skuMatch) release.sku = skuMatch[1].toUpperCase();
+    }
 
     // Try selectors in order of specificity; `main`/`article` alone are too
     // broad on this site (they pull in nav, search bar, and JSON-LD <script>

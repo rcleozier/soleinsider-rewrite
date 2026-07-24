@@ -32,6 +32,10 @@ export default async function AdminDashboardPage() {
       </section>
 
       <section className="admin-quick-links">
+        <Link className="admin-quick-link" href="/admin/products">
+          <strong>Products</strong>
+          <span>Browse, edit, or delete any product in the catalog.</span>
+        </Link>
         <Link className="admin-quick-link" href="/admin/tempReleases">
           <strong>Pending Releases</strong>
           <span>Review crawler discoveries and approve, reject, or delete them.</span>

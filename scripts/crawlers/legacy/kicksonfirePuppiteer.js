@@ -120,7 +120,14 @@ exports.run = function (url) {
       await delay(500);
     }
 
+    try { await detailPage.close(); } catch (_) {}
     await browser.close();
+  };
+
+  const createDetailPage = async (browser, headers) => {
+    const detailPage = await browser.newPage();
+    await detailPage.setExtraHTTPHeaders(headers);
+    return detailPage;
   };
 
   const getReleaseInformation = async (url, page) => {

@@ -39,6 +39,68 @@ export async function getAdminFavorites(limit = 12) {
     .filter((favorite): favorite is NonNullable<typeof favorite> => favorite !== null);
 }
 
+export type AdminProductListParams = {
+  search?: string;
+  page?: number;
+  perPage?: number;
+};
+
+/** Paginated, searchable product list for the admin products page. */
+export async function getAdminProductList({ search = "", page = 1, perPage = 24 }: AdminProductListParams = {}) {
+  const trimmed = search.trim();
+  const where = trimmed
+    ? {
+        OR: [
+          { name: { contains: trimmed, mode: "insensitive" as const } },
+          { sku: { contains: trimmed, mode: "insensitive" as const } },
+        ],
+      }
+    : undefined;
+
+  const currentPage = Math.max(1, page);
+
+  const [total, products] = await Promise.all([
+    prisma.product.count({ where }),
+    prisma.product.findMany({
+      where,
+      orderBy: { id: "desc" },
+      skip: (currentPage - 1) * perPage,
+      take: perPage,
+      select: { id: true, name: true, slug: true, image: true, sku: true, price: true, type: true },
+    }),
+  ]);
+
+  const releases = await prisma.release.findMany({
+    where: { productId: { in: products.map((product) => product.id) } },
+    orderBy: { id: "desc" },
+    select: { productId: true, releaseDate: true },
+  });
+
+  const releaseByProduct = new Map<number, Date>();
+  for (const release of releases) {
+    if (!releaseByProduct.has(release.productId)) {
+      releaseByProduct.set(release.productId, release.releaseDate);
+    }
+  }
+
+  return {
+    total,
+    page: currentPage,
+    perPage,
+    pageCount: Math.max(1, Math.ceil(total / perPage)),
+    products: products.map((product) => ({
+      id: product.id,
+      name: product.name,
+      sku: product.sku,
+      price: String(product.price),
+      type: product.type,
+      image: getProductImageUrl(product.image),
+      url: `/${product.slug}/${product.id}`,
+      releaseDate: releaseByProduct.get(product.id) ?? null,
+    })),
+  };
+}
+
 export async function getEditableProduct(id: number) {
   const [product, release] = await Promise.all([
     prisma.product.findUnique({ where: { id } }),

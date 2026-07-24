@@ -3,6 +3,7 @@ import { signOutAction } from "@/lib/authActions";
 
 const navLinks = [
   { href: "/admin", label: "Dashboard" },
+  { href: "/admin/products", label: "Products" },
   { href: "/admin/tempReleases", label: "Pending Releases" },
   { href: "/admin/addRelease", label: "Add Release" },
 ];
